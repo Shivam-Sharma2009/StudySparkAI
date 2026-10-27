@@ -20,16 +20,16 @@ Spec references: API → `05`, prompts → `06`, design → `03`, UI → `07`, t
 
 ## Phase 1 — Backend core (≈ 3–4 h) · can run in parallel with Phase 2
 
-- [ ] 1.1 `schemas.py`: enums, request models with the limits in `02 §6`, model-facing output models (`ExplainOutput`, `SummaryOutput`, `QuizOutput`, `PlanOutput`), response/meta models, `ErrorCode`, `AppError`.
-- [ ] 1.2 `config.py`: settings from env with defaults.
-- [ ] 1.3 `gemma_service.py`: client, `generate_json` with system-instruction fallback, timeout, JSON extraction, `{"error": …}` handling, validation, single retry with repair instruction, 429/5xx handling (`03 §3.2`, `04 §3`).
-- [ ] 1.4 `prompts.py`: `SYSTEM_BASE` and the four builders exactly as in `06`.
-- [ ] 1.5 `main.py`: app, CORS allow-list, slowapi limiter, request-id middleware, one log line per request, exception handlers that produce the error envelope (including FastAPI validation errors → `VALIDATION_ERROR`).
-- [ ] 1.6 `POST /api/explain` + unit tests (mocked service).
-- [ ] 1.7 `POST /api/summarize` + tests.
-- [ ] 1.8 `POST /api/quiz` + tests: exactly 5 questions, 4 distinct options, shuffle with correct remap, ids `q1–q5`.
-- [ ] 1.9 `POST /api/study-plan` + tests: horizon computation, day→date mapping, deadline guard, rest-day fill, minute clamping, ids, `truncated`.
-- [ ] 1.10 Prompt snapshot tests; JSON-extraction tests (fenced, extra text, trailing commas rejected).
+- [x] 1.1 `schemas.py`: enums, request models with the limits in `02 §6`, model-facing output models (`ExplainOutput`, `SummaryOutput`, `QuizOutput`, `PlanOutput`), response/meta models, `ErrorCode`, `AppError`.
+- [x] 1.2 `config.py`: settings from env with defaults.
+- [x] 1.3 `gemma_service.py`: client, `generate_json` with system-instruction fallback, timeout, JSON extraction, `{"error": …}` handling, validation, single retry with repair instruction, 429/5xx handling (`03 §3.2`, `04 §3`).
+- [x] 1.4 `prompts.py`: `SYSTEM_BASE` and the four builders exactly as in `06`.
+- [x] 1.5 `main.py`: app, CORS allow-list, slowapi limiter, request-id middleware, one log line per request, exception handlers that produce the error envelope (including FastAPI validation errors → `VALIDATION_ERROR`).
+- [x] 1.6 `POST /api/explain` + unit tests (mocked service).
+- [x] 1.7 `POST /api/summarize` + tests.
+- [x] 1.8 `POST /api/quiz` + tests: exactly 5 questions, 4 distinct options, shuffle with correct remap, ids `q1–q5`.
+- [x] 1.9 `POST /api/study-plan` + tests: horizon computation, day→date mapping, deadline guard, rest-day fill, minute clamping, ids, `truncated`.
+- [x] 1.10 Prompt snapshot tests; JSON-extraction tests (fenced, extra text, trailing commas rejected).
 
 **Gate 1:** `pytest` passes. Using real Gemma, all four endpoints return valid envelopes for the golden inputs in `09 §3`, in English and Hindi. Error cases return the right codes.
 
@@ -123,3 +123,4 @@ Record deviations and decisions here as you go so the specs stay truthful:
 | Date | Task | Change / decision | Spec updated? |
 |---|---|---|---|
 | 2026-10-27 | Phase 0 | Normalized specs to `docs/spec/`; scaffolded backend & frontend; verified health endpoint & mock service; live Gemma smoke test blocked pending user GEMINI_API_KEY. | Yes (`docsspec/` -> `docs/spec/`) |
+| 2026-10-28 | Phase 1 | Completed backend core: Pydantic schemas, prompt builders, async GemmaService with repair retry, all 5 endpoints with post-processing, and 42 unit/api tests. | No (Followed spec strictly) |
