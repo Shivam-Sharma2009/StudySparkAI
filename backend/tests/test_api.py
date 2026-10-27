@@ -1,6 +1,6 @@
 import pytest
 from datetime import date, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from httpx import AsyncClient, ASGITransport
 
 from main import app
@@ -69,22 +69,22 @@ async def test_explain_endpoint_success(mock_meta):
         quick_recap="Inertia keeps things doing what they are doing.",
     )
     mock_service.generate_json = AsyncMock(return_value=(mock_output, mock_meta))
+    app.dependency_overrides[get_gemma_service] = lambda: mock_service
 
-    with patch("main.get_gemma_service", return_value=mock_service):
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            res = await client.post(
-                "/api/explain",
-                json={"topic": "Newton's first law", "level": "beginner", "language": "en"},
-            )
-            assert res.status_code == 200
-            body = res.json()
-            assert body["ok"] is True
-            assert body["data"]["title"] == "Newton's First Law"
-            # Clamped to 5 points
-            assert len(body["data"]["key_points"]) == 5
-            assert body["meta"]["attempts"] == 1
-            assert "X-Request-Id" in res.headers
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        res = await client.post(
+            "/api/explain",
+            json={"topic": "Newton's first law", "level": "beginner", "language": "en"},
+        )
+        assert res.status_code == 200
+        body = res.json()
+        assert body["ok"] is True
+        assert body["data"]["title"] == "Newton's First Law"
+        # Clamped to 5 points
+        assert len(body["data"]["key_points"]) == 5
+        assert body["meta"]["attempts"] == 1
+        assert "X-Request-Id" in res.headers
 
 
 @pytest.mark.asyncio
@@ -112,22 +112,22 @@ async def test_summarize_endpoint_success(mock_meta):
         ],  # clamped to 6
     )
     mock_service.generate_json = AsyncMock(return_value=(mock_output, mock_meta))
+    app.dependency_overrides[get_gemma_service] = lambda: mock_service
 
-    with patch("main.get_gemma_service", return_value=mock_service):
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            res = await client.post(
-                "/api/summarize",
-                json={
-                    "notes": "Mitochondria produce ATP through cellular respiration which powers cells." + " extra words" * 10,
-                    "length": "short",
-                },
-            )
-            assert res.status_code == 200
-            body = res.json()
-            assert body["ok"] is True
-            assert len(body["data"]["key_points"]) == 7
-            assert len(body["data"]["key_terms"]) == 6
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        res = await client.post(
+            "/api/summarize",
+            json={
+                "notes": "Mitochondria produce ATP through cellular respiration which powers cells." + " extra words" * 10,
+                "length": "short",
+            },
+        )
+        assert res.status_code == 200
+        body = res.json()
+        assert body["ok"] is True
+        assert len(body["data"]["key_points"]) == 7
+        assert len(body["data"]["key_terms"]) == 6
 
 
 @pytest.mark.asyncio
@@ -157,26 +157,26 @@ async def test_quiz_endpoint_success_and_shuffle(mock_meta):
     ]
     mock_output = QuizOutput(topic="Cell Biology", questions=raw_questions)
     mock_service.generate_json = AsyncMock(return_value=(mock_output, mock_meta))
+    app.dependency_overrides[get_gemma_service] = lambda: mock_service
 
-    with patch("main.get_gemma_service", return_value=mock_service):
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            res = await client.post(
-                "/api/quiz",
-                json={"content": "Cell Biology notes", "difficulty": "medium"},
-            )
-            assert res.status_code == 200
-            body = res.json()
-            assert body["ok"] is True
-            questions = body["data"]["questions"]
-            assert len(questions) == 5
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        res = await client.post(
+            "/api/quiz",
+            json={"content": "Cell Biology notes", "difficulty": "medium"},
+        )
+        assert res.status_code == 200
+        body = res.json()
+        assert body["ok"] is True
+        questions = body["data"]["questions"]
+        assert len(questions) == 5
 
-            for idx, q in enumerate(questions):
-                assert q["id"] == f"q{idx + 1}"
-                assert len(q["options"]) == 4
-                # Verify correct_index accurately points to "CorrectAnswer" after shuffle
-                c_idx = q["correct_index"]
-                assert q["options"][c_idx] == "CorrectAnswer"
+        for idx, q in enumerate(questions):
+            assert q["id"] == f"q{idx + 1}"
+            assert len(q["options"]) == 4
+            # Verify correct_index accurately points to "CorrectAnswer" after shuffle
+            c_idx = q["correct_index"]
+            assert q["options"][c_idx] == "CorrectAnswer"
 
 
 @pytest.mark.asyncio
@@ -235,43 +235,43 @@ async def test_study_plan_endpoint_success(mock_meta):
         tips=["Tip 1", "Tip 2", "Tip 3"],
     )
     mock_service.generate_json = AsyncMock(return_value=(mock_output, mock_meta))
+    app.dependency_overrides[get_gemma_service] = lambda: mock_service
 
-    with patch("main.get_gemma_service", return_value=mock_service):
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            res = await client.post(
-                "/api/study-plan",
-                json={
-                    "subjects": [
-                        {"name": "Physics", "deadline": d1_str},
-                        {"name": "Maths", "deadline": (today + timedelta(days=1)).isoformat()},
-                    ],
-                    "daily_hours": 2.0,
-                    "start_date": start_str,
-                },
-            )
-            assert res.status_code == 200
-            body = res.json()
-            assert body["ok"] is True
-            data = body["data"]
-            assert data["horizon_days"] == 3
-            assert data["truncated"] is False
-            assert len(data["days"]) == 3
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        res = await client.post(
+            "/api/study-plan",
+            json={
+                "subjects": [
+                    {"name": "Physics", "deadline": d1_str},
+                    {"name": "Maths", "deadline": (today + timedelta(days=1)).isoformat()},
+                ],
+                "daily_hours": 2.0,
+                "start_date": start_str,
+            },
+        )
+        assert res.status_code == 200
+        body = res.json()
+        assert body["ok"] is True
+        data = body["data"]
+        assert data["horizon_days"] == 3
+        assert data["truncated"] is False
+        assert len(data["days"]) == 3
 
-            # Day 1 has circuits
-            assert data["days"][0]["day"] == 1
-            assert data["days"][0]["date"] == start_str
-            assert len(data["days"][0]["sessions"]) == 1
-            assert data["days"][0]["sessions"][0]["id"] == "d1-s1"
+        # Day 1 has circuits
+        assert data["days"][0]["day"] == 1
+        assert data["days"][0]["date"] == start_str
+        assert len(data["days"][0]["sessions"]) == 1
+        assert data["days"][0]["sessions"][0]["id"] == "d1-s1"
 
-            # Day 2 was missing, so rest day
-            assert data["days"][1]["day"] == 2
-            assert len(data["days"][1]["sessions"]) == 0
+        # Day 2 was missing, so rest day
+        assert data["days"][1]["day"] == 2
+        assert len(data["days"][1]["sessions"]) == 0
 
-            # Day 3: Maths deadline was day 2, so Maths session dropped; Physics kept
-            assert data["days"][2]["day"] == 3
-            assert len(data["days"][2]["sessions"]) == 1
-            assert data["days"][2]["sessions"][0]["subject"] == "Physics"
+        # Day 3: Maths deadline was day 2, so Maths session dropped; Physics kept
+        assert data["days"][2]["day"] == 3
+        assert len(data["days"][2]["sessions"]) == 1
+        assert data["days"][2]["sessions"][0]["subject"] == "Physics"
 
 
 @pytest.mark.asyncio
@@ -283,21 +283,21 @@ async def test_study_plan_horizon_no_deadlines(mock_meta):
         tips=["Study hard"],
     )
     mock_service.generate_json = AsyncMock(return_value=(mock_output, mock_meta))
+    app.dependency_overrides[get_gemma_service] = lambda: mock_service
 
-    with patch("main.get_gemma_service", return_value=mock_service):
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            res = await client.post(
-                "/api/study-plan",
-                json={
-                    "subjects": [{"name": "Chemistry"}],
-                    "daily_hours": 1.0,
-                },
-            )
-            assert res.status_code == 200
-            body = res.json()
-            assert body["data"]["horizon_days"] == 7
-            assert body["data"]["truncated"] is False
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        res = await client.post(
+            "/api/study-plan",
+            json={
+                "subjects": [{"name": "Chemistry"}],
+                "daily_hours": 1.0,
+            },
+        )
+        assert res.status_code == 200
+        body = res.json()
+        assert body["data"]["horizon_days"] == 7
+        assert body["data"]["truncated"] is False
 
 
 @pytest.mark.asyncio
@@ -308,22 +308,22 @@ async def test_study_plan_truncated_horizon(mock_meta):
     mock_service = MagicMock()
     mock_output = PlanOutput(summary="Plan", days=[], tips=[])
     mock_service.generate_json = AsyncMock(return_value=(mock_output, mock_meta))
+    app.dependency_overrides[get_gemma_service] = lambda: mock_service
 
-    with patch("main.get_gemma_service", return_value=mock_service):
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            res = await client.post(
-                "/api/study-plan",
-                json={
-                    "subjects": [{"name": "Biology", "deadline": far_deadline}],
-                    "daily_hours": 2.0,
-                    "start_date": today.isoformat(),
-                },
-            )
-            assert res.status_code == 200
-            body = res.json()
-            assert body["data"]["horizon_days"] == 14
-            assert body["data"]["truncated"] is True
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        res = await client.post(
+            "/api/study-plan",
+            json={
+                "subjects": [{"name": "Biology", "deadline": far_deadline}],
+                "daily_hours": 2.0,
+                "start_date": today.isoformat(),
+            },
+        )
+        assert res.status_code == 200
+        body = res.json()
+        assert body["data"]["horizon_days"] == 14
+        assert body["data"]["truncated"] is True
 
 
 @pytest.mark.asyncio
@@ -336,16 +336,16 @@ async def test_unsuitable_input_error_response():
             retryable=False,
         )
     )
+    app.dependency_overrides[get_gemma_service] = lambda: mock_service
 
-    with patch("main.get_gemma_service", return_value=mock_service):
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            res = await client.post("/api/explain", json={"topic": "asdf qwer zxcv"})
-            assert res.status_code == 422
-            body = res.json()
-            assert body["ok"] is False
-            assert body["error"]["code"] == "UNSUITABLE_INPUT"
-            assert body["error"]["retryable"] is False
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        res = await client.post("/api/explain", json={"topic": "asdf qwer zxcv"})
+        assert res.status_code == 422
+        body = res.json()
+        assert body["ok"] is False
+        assert body["error"]["code"] == "UNSUITABLE_INPUT"
+        assert body["error"]["retryable"] is False
 
 
 @pytest.mark.asyncio
@@ -358,16 +358,16 @@ async def test_model_unavailable_error_response():
             retryable=True,
         )
     )
+    app.dependency_overrides[get_gemma_service] = lambda: mock_service
 
-    with patch("main.get_gemma_service", return_value=mock_service):
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            res = await client.post("/api/explain", json={"topic": "Gravity"})
-            assert res.status_code == 503
-            body = res.json()
-            assert body["ok"] is False
-            assert body["error"]["code"] == "MODEL_UNAVAILABLE"
-            assert body["error"]["retryable"] is True
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        res = await client.post("/api/explain", json={"topic": "Gravity"})
+        assert res.status_code == 503
+        body = res.json()
+        assert body["ok"] is False
+        assert body["error"]["code"] == "MODEL_UNAVAILABLE"
+        assert body["error"]["retryable"] is True
 
 
 @pytest.mark.asyncio
@@ -380,16 +380,16 @@ async def test_model_timeout_error_response():
             retryable=True,
         )
     )
+    app.dependency_overrides[get_gemma_service] = lambda: mock_service
 
-    with patch("main.get_gemma_service", return_value=mock_service):
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            res = await client.post("/api/explain", json={"topic": "Quantum physics"})
-            assert res.status_code == 504
-            body = res.json()
-            assert body["ok"] is False
-            assert body["error"]["code"] == "MODEL_TIMEOUT"
-            assert body["error"]["retryable"] is True
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        res = await client.post("/api/explain", json={"topic": "Quantum physics"})
+        assert res.status_code == 504
+        body = res.json()
+        assert body["ok"] is False
+        assert body["error"]["code"] == "MODEL_TIMEOUT"
+        assert body["error"]["retryable"] is True
 
 
 @pytest.mark.asyncio
