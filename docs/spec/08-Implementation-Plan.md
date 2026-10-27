@@ -37,13 +37,13 @@ Spec references: API → `05`, prompts → `06`, design → `03`, UI → `07`, t
 
 ## Phase 2 — Frontend shell (≈ 2–3 h) · can run in parallel with Phase 1 using mocks
 
-- [ ] 2.1 `services/api.js`: `apiRequest`, four feature functions, `checkHealth`, `ApiError`, 70 s timeout, envelope parsing, network/timeouts mapped to `NETWORK_ERROR` / `CLIENT_TIMEOUT`.
-- [ ] 2.2 `services/mocks.js`: fixtures copied from `05` plus per-error mocks; `VITE_USE_MOCKS` and `?mockError=` support.
-- [ ] 2.3 `SettingsContext` + `useLocalStorage`: theme (light/dark/system) and language, persisted.
-- [ ] 2.4 `Sidebar`, `Header`, `Home`, `App` routing (`/`, `/history`), responsive layout with bottom tab bar on mobile (`07 §2`).
-- [ ] 2.5 `StatusMessage` (loading / error / empty).
-- [ ] 2.6 Health ping on load, status dot, "waking up" banner after 3 s (`04 §7`).
-- [ ] 2.7 Design tokens in `index.css`, fonts (Inter + Noto Sans Devanagari), dark-mode variant.
+- [x] 2.1 `services/api.js`: `apiRequest`, four feature functions, `checkHealth`, `ApiError`, 70 s timeout, envelope parsing, network/timeouts mapped to `NETWORK_ERROR` / `CLIENT_TIMEOUT`.
+- [x] 2.2 `services/mocks.js`: fixtures copied from `05` plus per-error mocks; `VITE_USE_MOCKS` and `?mockError=` support.
+- [x] 2.3 `SettingsContext` + `useLocalStorage`: theme (light/dark/system) and language, persisted.
+- [x] 2.4 `Sidebar`, `Header`, `Home`, `App` routing (`/`, `/history`), responsive layout with bottom tab bar on mobile (`07 §2`).
+- [x] 2.5 `StatusMessage` (loading / error / empty).
+- [x] 2.6 Health ping on load, status dot, "waking up" banner after 3 s (`04 §7`).
+- [x] 2.7 Design tokens in `index.css`, fonts (Inter + Noto Sans Devanagari), dark-mode variant.
 
 **Gate 2:** app shell works at 360 px and 1280 px; theme toggle works; health states display correctly.
 
@@ -124,3 +124,4 @@ Record deviations and decisions here as you go so the specs stay truthful:
 |---|---|---|---|
 | 2026-10-27 | Phase 0 | Normalized specs to `docs/spec/`; scaffolded backend & frontend; verified health endpoint & mock service; live Gemma smoke test blocked pending user GEMINI_API_KEY. | Yes (`docsspec/` -> `docs/spec/`) |
 | 2026-10-28 | Phase 1 | Completed backend core: Pydantic schemas, prompt builders, async GemmaService with repair retry, all 5 endpoints with post-processing, and 42 unit/api tests. | No (Followed spec strictly) |
+| 2026-10-28 | Phase 2 | Completed frontend shell: responsive Sidebar, Header, BottomTabBar, SettingsContext, feature panels with interactive state, mock mode services, and verified build. | No (Followed spec strictly) |
