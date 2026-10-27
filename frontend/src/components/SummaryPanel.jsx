@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSettings } from '../context/SettingsContext';
+import { useStudyHistory } from '../hooks/useStudyHistory';
 import { summarizeNotes } from '../services/api';
 import StatusMessage from './StatusMessage';
 import { FileText, Copy, Check, ArrowRight, Sparkles } from 'lucide-react';
 
-export function SummaryResult({ result, onQuizMe }) {
+export function SummaryResult({ result, onQuizMe, language = 'en' }) {
   const [copied, setCopied] = useState(false);
   const headingRef = useRef(null);
 
@@ -29,6 +30,7 @@ export function SummaryResult({ result, onQuizMe }) {
 
   return (
     <article
+      lang={language || result?.language || 'en'}
       className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#181B24] border border-[#E5E3DA] dark:border-[#2C3140] shadow-sm space-y-6 transition-all"
       aria-labelledby="summary-result-title"
     >
@@ -131,6 +133,7 @@ export function SummaryResult({ result, onQuizMe }) {
 
 export default function SummaryPanel({ onQuizMe }) {
   const { language } = useSettings();
+  const { addEntry } = useStudyHistory();
   const [notes, setNotes] = useState('');
   const [length, setLength] = useState('short'); // short | medium
   const [status, setStatus] = useState('idle');
@@ -157,6 +160,13 @@ export default function SummaryPanel({ onQuizMe }) {
       });
       setResult(response.data);
       setStatus('success');
+      addEntry({
+        type: 'summary',
+        language,
+        inputPreview: notes.trim().slice(0, 100),
+        request: { notes: notes.trim(), length, language },
+        result: response.data,
+      });
     } catch (err) {
       setErrorMessage(err.message || 'Could not summarize notes. Please try again.');
       setStatus('error');
@@ -276,7 +286,7 @@ export default function SummaryPanel({ onQuizMe }) {
           <StatusMessage type="error" message={errorMessage} onRetry={handleSubmit} />
         )}
         {status === 'success' && result && (
-          <SummaryResult result={result} onQuizMe={onQuizMe} />
+          <SummaryResult result={result} onQuizMe={onQuizMe} language={language} />
         )}
         {status === 'idle' && !result && (
           <StatusMessage type="empty" message="Paste lecture notes or textbook excerpts above to distill them." />

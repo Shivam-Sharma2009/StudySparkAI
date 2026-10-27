@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSettings } from '../context/SettingsContext';
+import { useStudyHistory } from '../hooks/useStudyHistory';
 import { explainTopic } from '../services/api';
 import StatusMessage from './StatusMessage';
 import { Sparkles, Copy, Check, ArrowRight } from 'lucide-react';
 
 const EXAMPLE_CHIPS = ["Photosynthesis", "Newton's third law", "Ohm's law"];
 
-export function ExplainResult({ result, onQuizMe }) {
+export function ExplainResult({ result, onQuizMe, language = 'en' }) {
   const [copied, setCopied] = useState(false);
   const headingRef = useRef(null);
 
@@ -29,6 +30,7 @@ export function ExplainResult({ result, onQuizMe }) {
 
   return (
     <article
+      lang={language || result?.language || 'en'}
       className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#181B24] border border-[#E5E3DA] dark:border-[#2C3140] shadow-sm space-y-6 transition-all"
       aria-labelledby="explain-result-title"
     >
@@ -129,6 +131,7 @@ export function ExplainResult({ result, onQuizMe }) {
 
 export default function ExplainPanel({ onQuizMe, initialTopic = '' }) {
   const { language } = useSettings();
+  const { addEntry } = useStudyHistory();
   const [topic, setTopic] = useState(initialTopic);
   const [level, setLevel] = useState('beginner'); // beginner | intermediate | advanced
   const [status, setStatus] = useState('idle'); // idle | loading | success | error
@@ -151,6 +154,13 @@ export default function ExplainPanel({ onQuizMe, initialTopic = '' }) {
       });
       setResult(response.data);
       setStatus('success');
+      addEntry({
+        type: 'explain',
+        language,
+        inputPreview: cleanTopic,
+        request: { topic: cleanTopic, level, language },
+        result: response.data,
+      });
     } catch (err) {
       setErrorMessage(err.message || 'Could not explain this topic. Please try again.');
       setStatus('error');
@@ -272,7 +282,7 @@ export default function ExplainPanel({ onQuizMe, initialTopic = '' }) {
           <StatusMessage type="error" message={errorMessage} onRetry={handleSubmit} />
         )}
         {status === 'success' && result && (
-          <ExplainResult result={result} onQuizMe={onQuizMe} />
+          <ExplainResult result={result} onQuizMe={onQuizMe} language={language} />
         )}
         {status === 'idle' && !result && (
           <StatusMessage type="empty" message="Enter a topic above or tap an example to begin." />
