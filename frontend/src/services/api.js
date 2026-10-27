@@ -20,7 +20,7 @@ export async function checkHealth() {
   if (USE_MOCKS) {
     return {
       status: "ok",
-      ai_configured: false,
+      ai_configured: true,
       model: "gemma-4-26b-a4b-it (mock)",
       version: "1.0.0"
     };
@@ -123,4 +123,44 @@ export async function apiRequest(endpoint, payload, fixtureKey = null) {
     }
     throw new ApiError('NETWORK_ERROR', 'Cannot connect to StudySpark server. Please check your connection.', true);
   }
+}
+
+/**
+ * Feature 1: Explain a Topic
+ * @param {{ topic: string, level?: string, language?: string }} payload
+ * @returns {Promise<{ data: Object, meta: Object }>}
+ */
+export async function explainTopic(payload) {
+  const res = await apiRequest('/api/explain', payload, 'explain');
+  return { data: res.data, meta: res.meta };
+}
+
+/**
+ * Feature 2: Summarize Notes
+ * @param {{ notes: string, length?: string, language?: string }} payload
+ * @returns {Promise<{ data: Object, meta: Object }>}
+ */
+export async function summarizeNotes(payload) {
+  const res = await apiRequest('/api/summarize', payload, 'summary');
+  return { data: res.data, meta: res.meta };
+}
+
+/**
+ * Feature 3: Generate Quiz
+ * @param {{ content: string, difficulty?: string, language?: string }} payload
+ * @returns {Promise<{ data: Object, meta: Object }>}
+ */
+export async function generateQuiz(payload) {
+  const res = await apiRequest('/api/quiz', payload, 'quiz');
+  return { data: res.data, meta: res.meta };
+}
+
+/**
+ * Feature 4: Generate Study Plan
+ * @param {{ subjects: Array, daily_hours: number, start_date?: string, language?: string }} payload
+ * @returns {Promise<{ data: Object, meta: Object }>}
+ */
+export async function generateStudyPlan(payload) {
+  const res = await apiRequest('/api/study-plan', payload, 'study-plan');
+  return { data: res.data, meta: res.meta };
 }
