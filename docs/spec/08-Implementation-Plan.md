@@ -51,11 +51,11 @@ Spec references: API → `05`, prompts → `06`, design → `03`, UI → `07`, t
 
 ## Phase 3 — The four features (≈ 4–6 h)
 
-- [ ] 3.1 `ExplainPanel` + exported `ExplainResult`: form, validation, status machine, result card, Copy, example chips.
-- [ ] 3.2 `SummaryPanel` + `SummaryResult`: char counter 50–8000, length control, key terms list.
-- [ ] 3.3 `QuizPanel` + `QuizResult`: state machine from `04 §4`, A–D options, check/next, results screen, retake/new quiz.
-- [ ] 3.4 `StudyPlanPanel` + `StudyPlanResult`: dynamic subject rows (max 6), validation, day cards with sessions, tips, truncated note, Copy as text.
-- [ ] 3.5 Hook every panel into `api.js`; "Try again" re-submits the same payload.
+- [x] 3.1 `ExplainPanel` + exported `ExplainResult`: form, validation, status machine, result card, Copy, example chips.
+- [x] 3.2 `SummaryPanel` + `SummaryResult`: char counter 50–8000, length control, key terms list.
+- [x] 3.3 `QuizPanel` + `QuizResult`: state machine from `04 §4`, A–D options, check/next, results screen, retake/new quiz.
+- [x] 3.4 `StudyPlanPanel` + `StudyPlanResult`: dynamic subject rows (max 6), validation, day cards with sessions, tips, truncated note, Copy as text.
+- [x] 3.5 Hook every panel into `api.js`; "Try again" re-submits the same payload.
 
 **Gate 3:** each tool works against mocks **and** against the real backend. Every panel has loading, error and empty states. No console errors.
 
@@ -125,3 +125,4 @@ Record deviations and decisions here as you go so the specs stay truthful:
 | 2026-10-27 | Phase 0 | Normalized specs to `docs/spec/`; scaffolded backend & frontend; verified health endpoint & mock service; live Gemma smoke test blocked pending user GEMINI_API_KEY. | Yes (`docsspec/` -> `docs/spec/`) |
 | 2026-10-28 | Phase 1 | Completed backend core: Pydantic schemas, prompt builders, async GemmaService with repair retry, all 5 endpoints with post-processing, and 42 unit/api tests. | No (Followed spec strictly) |
 | 2026-10-28 | Phase 2 | Completed frontend shell: responsive Sidebar, Header, BottomTabBar, SettingsContext, feature panels with interactive state, mock mode services, and verified build. | No (Followed spec strictly) |
+| 2026-10-28 | Phase 3 | All four feature panels (Explain, Summary, Quiz, Study Plan) were already built with full forms, validation, status machines, result cards, Copy, retry, and api.js integration during Phase 2. Switched frontend from mock mode to real backend mode. Frontend builds cleanly (1578 modules, 0 errors). Backend tests pass (42/42). | No (Followed spec strictly) |
