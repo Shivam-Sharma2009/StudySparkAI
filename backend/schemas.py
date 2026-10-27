@@ -123,13 +123,13 @@ class SubjectInput(BaseTrimmedModel):
     @field_validator("deadline")
     @classmethod
     def validate_deadline_format(cls, v: Optional[str]) -> Optional[str]:
-        if not v:
+        if not v or not v.strip():
             return None
         try:
-            datetime.strptime(v, "%Y-%m-%d")
+            datetime.strptime(v.strip(), "%Y-%m-%d")
         except ValueError:
-            raise ValueError("Deadline must be in YYYY-MM-DD format")
-        return v
+            raise ValueError("deadline must be in YYYY-MM-DD format")
+        return v.strip()
 
 
 class StudyPlanRequest(BaseTrimmedModel):
@@ -141,7 +141,6 @@ class StudyPlanRequest(BaseTrimmedModel):
     @field_validator("daily_hours")
     @classmethod
     def validate_daily_hours_step(cls, v: float) -> float:
-        # daily_hours in 0.5..12, step 0.5
         if round(v * 2) != v * 2:
             raise ValueError("daily_hours must be a multiple of 0.5")
         return v
@@ -149,13 +148,13 @@ class StudyPlanRequest(BaseTrimmedModel):
     @field_validator("start_date")
     @classmethod
     def validate_start_date_format(cls, v: Optional[str]) -> Optional[str]:
-        if not v:
+        if not v or not v.strip():
             return None
         try:
-            datetime.strptime(v, "%Y-%m-%d")
+            datetime.strptime(v.strip(), "%Y-%m-%d")
         except ValueError:
             raise ValueError("start_date must be in YYYY-MM-DD format")
-        return v
+        return v.strip()
 
     @model_validator(mode="after")
     def validate_subject_deadlines(self) -> "StudyPlanRequest":
@@ -222,12 +221,38 @@ class QuizOutput(BaseTrimmedModel):
     topic: str = Field(..., min_length=1)
     questions: List[RawQuizQuestion] = Field(..., min_length=5)
 
+    @field_validator("questions")
+    @classmethod
+    def validate_questions_count(cls, v: List[RawQuizQuestion]) -> List[RawQuizQuestion]:
+        if len(v) < 5:
+            raise ValueError(f"Quiz must have at least 5 questions, got {len(v)}")
+        return v
+
 
 class RawPlanSession(BaseTrimmedModel):
     subject: str = Field(..., min_length=1)
     topic: str = Field(..., min_length=1)
-    minutes: int = Field(..., ge=5, le=240)
+    minutes: int = Field(default=60)
     activity: Activity = Field(default=Activity.LEARN)
+
+    @field_validator("activity", mode="before")
+    @classmethod
+    def normalize_activity(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            v_clean = v.strip().lower()
+            for act in Activity:
+                if act.value == v_clean:
+                    return act
+        return v
+
+    @field_validator("minutes", mode="before")
+    @classmethod
+    def clamp_minutes(cls, v: Any) -> int:
+        try:
+            val = int(v)
+            return max(5, min(240, val))
+        except (ValueError, TypeError):
+            return 60
 
 
 class RawPlanDay(BaseTrimmedModel):
