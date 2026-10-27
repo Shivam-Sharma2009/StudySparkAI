@@ -205,6 +205,18 @@ class RawQuizQuestion(BaseTrimmedModel):
     correct_index: int = Field(..., ge=0, le=3)
     explanation: str = Field(..., min_length=1)
 
+    @field_validator("options")
+    @classmethod
+    def validate_options(cls, v: List[str]) -> List[str]:
+        if len(v) != 4:
+            raise ValueError("Each question must have exactly 4 options")
+        cleaned = [opt.strip() for opt in v if opt.strip()]
+        if len(cleaned) != 4:
+            raise ValueError("All 4 options must be non-empty strings")
+        if len(set(opt.lower() for opt in cleaned)) != 4:
+            raise ValueError("All 4 options must be distinct")
+        return cleaned
+
 
 class QuizOutput(BaseTrimmedModel):
     topic: str = Field(..., min_length=1)
