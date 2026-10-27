@@ -1,6 +1,13 @@
 # StudySpark AI ⚡
 > **Tagline:** Learn Smarter, Not Harder. 📚
+> 
+🧩 The Problem
 
+Students don't struggle for lack of material. They struggle with turning it into understanding. Textbooks are dense, notes are messy, and exam deadlines sneak up. Most students end up re-reading passively, which is one of the least effective ways to study.
+
+💡 Our Solution
+
+StudySpark AI is an AI study companion that turns any topic or set of notes into four things students actually need: a clear explanation, a tight summary, a practice quiz, and a realistic study schedule. All in one place, powered by Gemma 4 through the Gemini API.
 StudySpark AI is an AI-powered study assistant built with FastAPI, Gemma 4 (via Google GenAI SDK / Gemini API), and Vite + React with Tailwind CSS.
 
 ## Features
