@@ -224,3 +224,27 @@ async def test_gemma_service_upstream_429():
 
     assert exc_info.value.code == ErrorCode.RATE_LIMITED
     assert exc_info.value.status_code == 429
+
+
+@pytest.mark.asyncio
+async def test_provider_error_logs_never_include_exception_text(caplog):
+    secret_text = "API_KEY=do-not-log-this"
+    mock_client = MagicMock()
+    mock_client.aio.models.generate_content = AsyncMock(
+        side_effect=Exception(secret_text)
+    )
+    service = GemmaService(api_key="valid-mock-key", client=mock_client)
+
+    with patch("asyncio.sleep", new_callable=AsyncMock):
+        with pytest.raises(AppError) as exc_info:
+            await service.generate_json(
+                system="sys",
+                user="private student content",
+                output_model=ExplainOutput,
+                temperature=0.4,
+                max_output_tokens=1200,
+            )
+
+    assert exc_info.value.code == ErrorCode.MODEL_UNAVAILABLE
+    assert secret_text not in caplog.text
+    assert "private student content" not in caplog.text

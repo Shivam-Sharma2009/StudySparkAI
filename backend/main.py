@@ -48,20 +48,80 @@ limiter = Limiter(key_func=get_remote_address, default_limits=[settings.rate_lim
 app = FastAPI(
     title="StudySpark AI API",
     version="1.0.0",
-    docs_url="/docs",
+    docs_url=None if settings.is_production else "/docs",
     redoc_url=None,
+    openapi_url=None if settings.is_production else "/openapi.json",
+    debug=False,
 )
 app.state.limiter = limiter
 
-# CORS configuration
+
+class RequestBodyTooLarge(Exception):
+    pass
+
+
+class RequestBodyLimitMiddleware:
+    def __init__(self, app, max_body_size: int = 64 * 1024):
+        self.app = app
+        self.max_body_size = max_body_size
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http" or scope["method"] != "POST":
+            await self.app(scope, receive, send)
+            return
+
+        headers = dict(scope.get("headers", []))
+        content_length = headers.get(b"content-length")
+        if content_length:
+            try:
+                if int(content_length) > self.max_body_size:
+                    await self._reject(scope, receive, send)
+                    return
+            except ValueError:
+                pass
+
+        received_bytes = 0
+
+        async def limited_receive():
+            nonlocal received_bytes
+            message = await receive()
+            if message["type"] == "http.request":
+                received_bytes += len(message.get("body", b""))
+                if received_bytes > self.max_body_size:
+                    raise RequestBodyTooLarge()
+            return message
+
+        try:
+            await self.app(scope, limited_receive, send)
+        except RequestBodyTooLarge:
+            await self._reject(scope, receive, send)
+
+    async def _reject(self, scope, receive, send):
+        response = JSONResponse(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            content={
+                "ok": False,
+                "error": {
+                    "code": ErrorCode.VALIDATION_ERROR.value,
+                    "message": "Request body must not exceed 64 KiB.",
+                    "retryable": False,
+                    "details": {"field": "request"},
+                },
+            },
+        )
+        await response(scope, receive, send)
+
+
+# CORS is outermost so its headers also apply to rejected requests.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["*"],
+    allow_headers=["Content-Type", "X-Request-Id"],
     expose_headers=["X-Request-Id"],
 )
+app.add_middleware(RequestBodyLimitMiddleware)
 
 
 # ============================================================================
@@ -163,7 +223,11 @@ async def validation_error_handler(request: Request, exc: RequestValidationError
 
 @app.exception_handler(Exception)
 async def generic_error_handler(request: Request, exc: Exception):
-    logger.exception(f"Unhandled server error: {exc}")
+    logger.error(
+        "Unhandled server error (request_id=%s, error_type=%s)",
+        getattr(request.state, "request_id", "unknown"),
+        type(exc).__name__,
+    )
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
@@ -439,9 +503,7 @@ async def generate_study_plan(
                 # Drop session if subject has a deadline earlier than this day's date
                 sub_deadline = subject_deadlines_map.get(sess.subject.strip().lower())
                 if sub_deadline is not None and sub_deadline < day_date:
-                    logger.info(
-                        f"Dropping session for '{sess.subject}' on day {day_obj.day} ({day_date}) after deadline {sub_deadline}"
-                    )
+                    logger.info("Dropping a plan session after its subject deadline (day=%s)", day_obj.day)
                     continue
 
                 session_id = f"d{day_obj.day}-s{len(clean_sessions) + 1}"

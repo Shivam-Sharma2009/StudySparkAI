@@ -1,9 +1,11 @@
 import pytest
+from pydantic import ValidationError
 from datetime import date, timedelta
 from unittest.mock import AsyncMock, MagicMock
 from httpx import AsyncClient, ASGITransport
 
 from main import app
+from config import Settings
 from gemma_service import get_gemma_service
 from schemas import (
     ExplainOutput,
@@ -99,6 +101,21 @@ async def test_explain_validation_error():
         assert body["error"]["code"] == "VALIDATION_ERROR"
         assert body["error"]["retryable"] is False
         assert body["error"]["details"]["field"] == "topic"
+
+
+@pytest.mark.asyncio
+async def test_request_body_size_limit_returns_error_envelope():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        res = await client.post(
+            "/api/explain",
+            content=b'{"topic":"' + (b"x" * (65 * 1024)) + b'"}',
+            headers={"content-type": "application/json"},
+        )
+    assert res.status_code == 413
+    assert res.json()["ok"] is False
+    assert res.json()["error"]["code"] == "VALIDATION_ERROR"
+    assert res.headers.get("x-request-id")
 
 
 @pytest.mark.asyncio
@@ -404,3 +421,32 @@ async def test_cors_headers():
             },
         )
         assert res.headers.get("access-control-allow-origin") == "http://localhost:5173"
+
+
+@pytest.mark.asyncio
+async def test_cors_rejects_unconfigured_origin():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        res = await client.options(
+            "/api/health",
+            headers={
+                "Origin": "https://not-configured.example",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+    assert res.headers.get("access-control-allow-origin") is None
+
+
+def test_production_settings_require_explicit_non_local_cors_origins():
+    with pytest.raises(ValidationError, match="explicit origins"):
+        Settings(app_env="production", allowed_origins="*")
+
+    with pytest.raises(ValidationError, match="local development origins"):
+        Settings(app_env="production", allowed_origins="http://localhost:5173")
+
+    settings = Settings(
+        app_env="production",
+        allowed_origins="https://studyspark.example",
+    )
+    assert settings.is_production
+    assert settings.cors_origins == ["https://studyspark.example"]

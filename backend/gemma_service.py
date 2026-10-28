@@ -87,7 +87,7 @@ class GemmaService:
             self.client = genai.Client(api_key=self.api_key)
             return self.client
         except Exception as e:
-            logger.error(f"Failed to create Google GenAI client: {e}")
+            logger.error("Failed to create Google GenAI client (error_type=%s)", type(e).__name__)
             raise AppError(
                 code=ErrorCode.MODEL_UNAVAILABLE,
                 message="Failed to initialize AI service client.",
@@ -183,7 +183,11 @@ class GemmaService:
 
                 # Upstream 429
                 if err_code == 429 or "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg:
-                    logger.warning(f"Upstream rate limit hit on attempt {attempts}: {e}")
+                    logger.warning(
+                        "Upstream rate limit hit (attempt=%s, error_type=%s)",
+                        attempts,
+                        type(e).__name__,
+                    )
                     if attempts < max_attempts:
                         await asyncio.sleep(1.5)
                         continue
@@ -194,8 +198,16 @@ class GemmaService:
                     )
 
                 # Upstream 5xx / connection error
-                if (err_code and err_code >= 500) or "503" in err_msg or "unavailable" in err_msg.lower():
-                    logger.warning(f"Upstream provider error on attempt {attempts}: {e}")
+                try:
+                    provider_status = int(err_code)
+                except (TypeError, ValueError):
+                    provider_status = 0
+                if provider_status >= 500 or "503" in err_msg or "unavailable" in err_msg.lower():
+                    logger.warning(
+                        "Upstream provider error (attempt=%s, error_type=%s)",
+                        attempts,
+                        type(e).__name__,
+                    )
                     if attempts < max_attempts:
                         await asyncio.sleep(1.0)
                         continue
@@ -206,7 +218,11 @@ class GemmaService:
                     )
 
                 # Other unexpected model failure
-                logger.error(f"Unexpected model call error on attempt {attempts}: {e}")
+                logger.error(
+                    "Unexpected model call error (attempt=%s, error_type=%s)",
+                    attempts,
+                    type(e).__name__,
+                )
                 if attempts < max_attempts:
                     await asyncio.sleep(0.5)
                     continue
@@ -223,7 +239,7 @@ class GemmaService:
                 # Check if model reported content cannot be used for studying
                 if "error" in data_dict and isinstance(data_dict["error"], str):
                     reason = data_dict["error"]
-                    logger.info(f"Model returned unsuitable input error: {reason}")
+                    logger.info("Model returned unsuitable input (language=%s)", language)
                     raise AppError(
                         code=ErrorCode.UNSUITABLE_INPUT,
                         message=reason,
@@ -244,7 +260,11 @@ class GemmaService:
                 # Re-raise AppError immediately (e.g. UNSUITABLE_INPUT)
                 raise
             except (ValueError, ValidationError) as parse_err:
-                logger.warning(f"Model output validation failed on attempt {attempts}: {parse_err}")
+                logger.warning(
+                    "Model output validation failed (attempt=%s, error_type=%s)",
+                    attempts,
+                    type(parse_err).__name__,
+                )
                 if attempts < max_attempts:
                     # Append repair instruction for attempt 2
                     problem_hint = str(parse_err).split("\n")[0]
