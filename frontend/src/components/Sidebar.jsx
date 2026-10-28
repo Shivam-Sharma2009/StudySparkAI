@@ -92,7 +92,7 @@ export default function Sidebar({
                   onSelectTool(item.id);
                   setSidebarOpen(false);
                 }}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs transition-colors text-left ${
+                className={`w-full min-h-11 flex items-center justify-between px-3 py-2.5 rounded-xl text-xs transition-colors text-left ${
                   isActive
                     ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-semibold border-l-4 border-indigo-600 dark:border-indigo-400'
                     : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/60'
@@ -166,7 +166,7 @@ export function BottomTabBar({ activeTool, onSelectTool }) {
           <button
             key={tool.id}
             onClick={() => onSelectTool(tool.id)}
-            className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-lg text-[10px] font-medium transition ${
+            className={`min-h-11 min-w-11 flex flex-col items-center justify-center py-1.5 px-3 rounded-lg text-[10px] font-medium transition ${
               isActive
                 ? 'text-indigo-600 dark:text-indigo-400'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'

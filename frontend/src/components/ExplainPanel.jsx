@@ -7,6 +7,25 @@ import { Sparkles, Copy, Check, ArrowRight } from 'lucide-react';
 
 const EXAMPLE_CHIPS = ["Photosynthesis", "Newton's third law", "Ohm's law"];
 
+function handleRadioGroupKeyDown(event) {
+  const movement = {
+    ArrowDown: 1,
+    ArrowRight: 1,
+    ArrowUp: -1,
+    ArrowLeft: -1,
+  }[event.key];
+  if (!movement) return;
+
+  const radios = Array.from(event.currentTarget.querySelectorAll('[role="radio"]:not(:disabled)'));
+  const currentIndex = radios.indexOf(event.target);
+  if (currentIndex < 0 || radios.length === 0) return;
+
+  event.preventDefault();
+  const nextIndex = (currentIndex + movement + radios.length) % radios.length;
+  radios[nextIndex].focus();
+  radios[nextIndex].click();
+}
+
 export function ExplainResult({ result, onQuizMe, language = 'en' }) {
   const { t } = useSettings();
   const [copied, setCopied] = useState(false);
@@ -53,7 +72,7 @@ export function ExplainResult({ result, onQuizMe, language = 'en' }) {
 
         <button
           onClick={handleCopy}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-medium text-gray-700 dark:text-gray-300 transition"
+          className="inline-flex min-h-11 min-w-11 items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-medium text-gray-700 dark:text-gray-300 transition"
           aria-label="Copy explanation to clipboard"
         >
           {copied ? (
@@ -132,7 +151,7 @@ export function ExplainResult({ result, onQuizMe, language = 'en' }) {
                   .slice(0, 6000)
               )
             }
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+            className="inline-flex min-h-11 items-center gap-1.5 px-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
           >
             <span>{t('quizOnTopic')}</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -236,6 +255,7 @@ export default function ExplainPanel({ onQuizMe, initialTopic = '' }) {
             className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-[#F1F0EA] dark:bg-[#20242F] border border-[#E5E3DA] dark:border-[#2C3140]"
             role="radiogroup"
             aria-label={t('studentLevel')}
+            onKeyDown={handleRadioGroupKeyDown}
           >
             {[
               { id: 'beginner', label: t('beginner'), desc: 'Simple analogies' },
@@ -247,8 +267,9 @@ export default function ExplainPanel({ onQuizMe, initialTopic = '' }) {
                 key={lvl.id}
                 role="radio"
                 aria-checked={level === lvl.id}
+                tabIndex={level === lvl.id ? 0 : -1}
                 onClick={() => setLevel(lvl.id)}
-                className={`py-2 px-2 rounded-lg text-xs font-medium text-center transition ${
+                className={`min-h-11 min-w-11 py-2 px-2 rounded-lg text-xs font-medium text-center transition ${
                   level === lvl.id
                     ? 'bg-white dark:bg-[#181B24] text-indigo-600 dark:text-indigo-400 shadow-sm font-semibold'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
@@ -264,7 +285,7 @@ export default function ExplainPanel({ onQuizMe, initialTopic = '' }) {
         <button
           type="submit"
           disabled={status === 'loading' || topic.trim().length < 3}
-          className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-700 dark:disabled:text-gray-200 disabled:opacity-100 text-white font-semibold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
+          className="w-full min-h-11 sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-700 dark:disabled:text-gray-200 disabled:opacity-100 text-white font-semibold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
         >
           <Sparkles className="w-4 h-4" />
           <span>{status === 'loading' ? t('explaining') : t('explainIt')}</span>
@@ -279,7 +300,7 @@ export default function ExplainPanel({ onQuizMe, initialTopic = '' }) {
                 key={chip}
                 type="button"
                 onClick={() => handleChipClick(chip)}
-                className="text-xs px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 hover:text-indigo-600 dark:hover:text-indigo-400 text-gray-600 dark:text-gray-300 transition"
+                className="min-h-11 px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 hover:text-indigo-600 dark:hover:text-indigo-400 text-gray-600 dark:text-gray-300 transition"
               >
                 {chip}
               </button>

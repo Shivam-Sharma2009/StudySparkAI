@@ -5,6 +5,25 @@ import { generateQuiz } from '../services/api';
 import StatusMessage, { HistoryStorageNotice } from './StatusMessage';
 import { CheckCircle2, Check, X, RotateCcw, Plus, Sparkles, HelpCircle } from 'lucide-react';
 
+function handleRadioGroupKeyDown(event) {
+  const movement = {
+    ArrowDown: 1,
+    ArrowRight: 1,
+    ArrowUp: -1,
+    ArrowLeft: -1,
+  }[event.key];
+  if (!movement) return;
+
+  const radios = Array.from(event.currentTarget.querySelectorAll('[role="radio"]:not(:disabled)'));
+  const currentIndex = radios.indexOf(event.target);
+  if (currentIndex < 0 || radios.length === 0) return;
+
+  event.preventDefault();
+  const nextIndex = (currentIndex + movement + radios.length) % radios.length;
+  radios[nextIndex].focus();
+  radios[nextIndex].click();
+}
+
 export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz }) {
   const { t } = useSettings();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -99,7 +118,7 @@ export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz })
           <div className="pt-3 flex justify-center gap-3">
             <button
               onClick={handleRetake}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-semibold text-gray-700 dark:text-gray-300 transition"
+              className="inline-flex min-h-11 min-w-11 items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-semibold text-gray-700 dark:text-gray-300 transition"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               {t('retakeQuiz')}
@@ -107,7 +126,7 @@ export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz })
             {onNewQuiz && (
               <button
                 onClick={onNewQuiz}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-xs font-semibold text-white transition"
+                className="inline-flex min-h-11 min-w-11 items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-xs font-semibold text-white transition"
               >
                 <Plus className="w-3.5 h-3.5" />
                 {t('newQuiz')}
@@ -223,6 +242,7 @@ export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz })
         className="space-y-2.5"
         role="radiogroup"
         aria-label={`Options for question ${currentIndex + 1}`}
+        onKeyDown={handleRadioGroupKeyDown}
       >
         {currentQ.options.map((opt, oIdx) => {
           const isSelected = selectedOption === oIdx;
@@ -252,6 +272,15 @@ export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz })
               type="button"
               role="radio"
               aria-checked={isSelected}
+              tabIndex={
+                selectedOption === null
+                  ? oIdx === 0
+                    ? 0
+                    : -1
+                  : isSelected
+                  ? 0
+                  : -1
+              }
               disabled={checked}
               onClick={() => handleSelectOption(oIdx)}
               className={`w-full min-h-[50px] p-3 rounded-xl border text-left text-xs sm:text-sm flex items-center justify-between transition-all ${optionStyle}`}
@@ -297,7 +326,7 @@ export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz })
             type="button"
             onClick={handleCheckAnswer}
             disabled={selectedOption === null}
-            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-700 dark:disabled:text-gray-200 disabled:opacity-100 text-white font-semibold text-xs sm:text-sm shadow-sm transition"
+            className="w-full min-h-11 sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-700 dark:disabled:text-gray-200 disabled:opacity-100 text-white font-semibold text-xs sm:text-sm shadow-sm transition"
           >
             {t('checkAnswer')}
           </button>
@@ -305,7 +334,7 @@ export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz })
           <button
             type="button"
             onClick={handleNext}
-            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition"
+            className="w-full min-h-11 sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition"
           >
             {currentIndex < questions.length - 1 ? t('nextQuestion') : t('seeResults')}
           </button>
@@ -405,6 +434,7 @@ export default function QuizPanel({ initialContent = '' }) {
             className="grid grid-cols-3 gap-1 p-1 max-w-md rounded-xl bg-[#F1F0EA] dark:bg-[#20242F] border border-[#E5E3DA] dark:border-[#2C3140]"
             role="radiogroup"
             aria-label={t('difficulty')}
+            onKeyDown={handleRadioGroupKeyDown}
           >
             {[
               { id: 'easy', label: t('easy'), desc: 'Direct recall' },
@@ -416,8 +446,9 @@ export default function QuizPanel({ initialContent = '' }) {
                 key={diff.id}
                 role="radio"
                 aria-checked={difficulty === diff.id}
+                tabIndex={difficulty === diff.id ? 0 : -1}
                 onClick={() => setDifficulty(diff.id)}
-                className={`py-2 px-2 rounded-lg text-xs font-medium text-center transition ${
+                className={`min-h-11 min-w-11 py-2 px-2 rounded-lg text-xs font-medium text-center transition ${
                   difficulty === diff.id
                     ? 'bg-white dark:bg-[#181B24] text-indigo-600 dark:text-indigo-400 shadow-sm font-semibold'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
@@ -433,7 +464,7 @@ export default function QuizPanel({ initialContent = '' }) {
         <button
           type="submit"
           disabled={status === 'loading' || !isValid}
-          className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-700 dark:disabled:text-gray-200 disabled:opacity-100 text-white font-semibold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
+          className="w-full min-h-11 sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-700 dark:disabled:text-gray-200 disabled:opacity-100 text-white font-semibold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
         >
           <Sparkles className="w-4 h-4" />
           <span>{status === 'loading' ? t('generatingQuiz') : t('generateQuiz')}</span>

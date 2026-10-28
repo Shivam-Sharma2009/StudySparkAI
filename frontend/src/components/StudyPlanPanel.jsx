@@ -107,7 +107,7 @@ export function StudyPlanResult({ plan, planId, language = 'en' }) {
 
         <button
           onClick={handleCopy}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-medium text-gray-700 dark:text-gray-300 transition"
+          className="inline-flex min-h-11 min-w-11 items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-medium text-gray-700 dark:text-gray-300 transition"
           aria-label="Copy plan to clipboard"
         >
           {copied ? (

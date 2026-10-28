@@ -19,6 +19,8 @@ export default function StatusMessage({
   // Rotate loading texts every 2 seconds unless user prefers reduced motion
   useEffect(() => {
     if (type !== 'loading') return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+
     const interval = setInterval(() => {
       setTextIndex((prev) => (prev + 1) % rotatingTexts.length);
     }, 2200);
@@ -33,7 +35,7 @@ export default function StatusMessage({
         aria-live="polite"
       >
         <div className="relative flex items-center justify-center">
-          <div className="w-12 h-12 rounded-full border-4 border-indigo-100 dark:border-indigo-950/60 border-t-indigo-600 dark:border-t-indigo-400 animate-spin" />
+          <div className="w-12 h-12 rounded-full border-4 border-indigo-100 dark:border-indigo-950/60 border-t-indigo-600 dark:border-t-indigo-400 animate-spin motion-reduce:animate-none" />
           <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400 absolute" />
         </div>
 
@@ -48,9 +50,9 @@ export default function StatusMessage({
 
         {/* Skeleton animation lines */}
         <div className="w-full max-w-md space-y-2 pt-2">
-          <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse w-3/4 mx-auto" />
-          <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse w-5/6 mx-auto" />
-          <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse w-2/3 mx-auto" />
+          <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse motion-reduce:animate-none w-3/4 mx-auto" />
+          <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse motion-reduce:animate-none w-5/6 mx-auto" />
+          <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse motion-reduce:animate-none w-2/3 mx-auto" />
         </div>
       </div>
     );
@@ -77,7 +79,7 @@ export default function StatusMessage({
           <div className="pt-1 flex items-center gap-2">
             <button
               onClick={onRetry}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-red-600 hover:bg-red-700 text-white shadow-sm transition"
+              className="inline-flex min-h-11 items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-red-600 hover:bg-red-700 text-white shadow-sm transition"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               {t('tryAgain')}

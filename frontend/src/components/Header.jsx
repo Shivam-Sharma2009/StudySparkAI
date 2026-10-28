@@ -43,12 +43,12 @@ export default function Header({
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-1 sm:gap-4">
         {/* Left: Mobile hamburger + Logo & Tagline */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="lg:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+            className="lg:hidden h-11 w-11 flex-shrink-0 flex items-center justify-center rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
             aria-label={t('toggleNavigation')}
           >
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -59,7 +59,7 @@ export default function Header({
               ⚡
             </span>
             <div>
-              <span className="font-bold text-lg leading-tight tracking-tight text-indigo-600 dark:text-indigo-400">
+              <span className="font-bold text-base sm:text-lg leading-tight tracking-tight text-indigo-600 dark:text-indigo-400">
                 StudySpark AI
               </span>
               <p className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
@@ -70,7 +70,7 @@ export default function Header({
         </div>
 
         {/* Right: Engine status + Language toggle + Theme toggle */}
-        <div className="flex items-center space-x-2 sm:space-x-3">
+        <div className="flex items-center space-x-1 sm:space-x-3">
           {/* Engine status indicator */}
           <div
             className="flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-medium border border-gray-200 dark:border-gray-800 bg-[#F1F0EA] dark:bg-[#20242F] transition-colors"
@@ -107,7 +107,7 @@ export default function Header({
             {!isHealthy && onRefreshHealth && (
               <button
                 onClick={onRefreshHealth}
-                className="text-[10px] text-indigo-600 dark:text-indigo-400 underline ml-0.5"
+                className="min-h-11 min-w-11 px-2 text-[10px] text-indigo-600 dark:text-indigo-400 underline ml-0.5"
               >
                 {t('retry')}
               </button>
@@ -117,7 +117,7 @@ export default function Header({
           {/* Language toggle: EN | हिं */}
           <button
             onClick={toggleLanguage}
-            className="px-2.5 py-1 text-xs font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#181B24] hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-700 dark:text-gray-200"
+            className="min-h-11 min-w-11 flex-shrink-0 px-2.5 py-1 text-xs font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#181B24] hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-700 dark:text-gray-200"
             title={t('toggleLanguage')}
             aria-label={t('languageLabel', { lang: language === 'en' ? 'English' : 'हिंदी' })}
           >
@@ -127,7 +127,7 @@ export default function Header({
           {/* Theme toggle: Light / Dark */}
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#181B24] hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-600 dark:text-gray-300"
+            className="h-11 w-11 flex-shrink-0 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#181B24] hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-600 dark:text-gray-300"
             aria-label={t('themeLabel')}
             title={isDark ? t('switchToLight') : t('switchToDark')}
           >
