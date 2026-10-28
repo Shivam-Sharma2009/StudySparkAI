@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSettings } from '../context/SettingsContext';
+import { useStudyHistory } from '../hooks/useStudyHistory';
 import { generateQuiz } from '../services/api';
 import StatusMessage from './StatusMessage';
 import { CheckCircle2, Check, X, RotateCcw, Plus, Sparkles, HelpCircle } from 'lucide-react';
 
-export function QuizResult({ quiz, onNewQuiz }) {
+export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
   const [checked, setChecked] = useState(false);
@@ -45,6 +46,15 @@ export function QuizResult({ quiz, onNewQuiz }) {
       setChecked(false);
     } else {
       setCompleted(true);
+      if (onCompleteQuiz) {
+        const finalScore = answers.filter((a) => a.isCorrect).length;
+        onCompleteQuiz({
+          score: finalScore,
+          total: questions.length,
+          topic: quiz.topic,
+          difficulty: quiz.difficulty,
+        });
+      }
     }
   };
 
@@ -61,6 +71,7 @@ export function QuizResult({ quiz, onNewQuiz }) {
   if (completed) {
     return (
       <article
+        lang={language || quiz?.language || 'en'}
         className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#181B24] border border-[#E5E3DA] dark:border-[#2C3140] shadow-sm space-y-6"
         aria-labelledby="quiz-result-summary"
       >
@@ -176,6 +187,7 @@ export function QuizResult({ quiz, onNewQuiz }) {
 
   return (
     <article
+      lang={language || quiz?.language || 'en'}
       className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#181B24] border border-[#E5E3DA] dark:border-[#2C3140] shadow-sm space-y-5"
       aria-labelledby="quiz-active-question"
     >
@@ -304,11 +316,13 @@ export function QuizResult({ quiz, onNewQuiz }) {
 
 export default function QuizPanel({ initialContent = '' }) {
   const { language } = useSettings();
+  const { addEntry, saveQuizScore } = useStudyHistory();
   const [content, setContent] = useState(initialContent);
   const [difficulty, setDifficulty] = useState('medium'); // easy | medium | hard
   const [status, setStatus] = useState('idle');
   const [quiz, setQuiz] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [lastEntryId, setLastEntryId] = useState(null);
 
   const isValid = content.trim().length >= 3 && content.trim().length <= 6000;
 
@@ -327,6 +341,14 @@ export default function QuizPanel({ initialContent = '' }) {
       });
       setQuiz(response.data);
       setStatus('success');
+      const entry = addEntry({
+        type: 'quiz',
+        language,
+        inputPreview: content.trim().slice(0, 100),
+        request: { content: content.trim(), difficulty, language },
+        result: response.data,
+      });
+      setLastEntryId(entry?.id);
     } catch (err) {
       setErrorMessage(err.message || 'Could not generate quiz. Please try again.');
       setStatus('error');
@@ -425,7 +447,20 @@ export default function QuizPanel({ initialContent = '' }) {
           <StatusMessage type="error" message={errorMessage} onRetry={handleSubmit} />
         )}
         {status === 'success' && quiz && (
-          <QuizResult quiz={quiz} onNewQuiz={() => setStatus('idle')} />
+          <QuizResult
+            quiz={quiz}
+            onNewQuiz={() => setStatus('idle')}
+            language={language}
+            onCompleteQuiz={({ score, total }) =>
+              saveQuizScore({
+                entryId: lastEntryId,
+                topic: quiz.topic,
+                score,
+                total,
+                difficulty,
+              })
+            }
+          />
         )}
         {status === 'idle' && !quiz && (
           <StatusMessage type="empty" message="Type a topic or paste study notes to launch your quiz." />
