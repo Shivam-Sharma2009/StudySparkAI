@@ -79,13 +79,23 @@ Spec references: API → `05`, prompts → `06`, design → `03`, UI → `07`, t
 
 - [ ] 5.1 Run the edge-case list in `09 §3–4`; fix failures.
 - [ ] 5.2 Accessibility pass from `07 §7` (keyboard-only run of all four tools, focus management, contrast).
-- [ ] 5.3 Deploy the backend (`09 §6`); set env vars; confirm `/api/health`.
-- [ ] 5.4 Deploy the frontend to Vercel with `VITE_API_BASE_URL`; add `vercel.json` SPA rewrite.
-- [ ] 5.5 Tighten `ALLOWED_ORIGINS` to the Vercel URL; re-test CORS.
-- [ ] 5.6 Production smoke test of all four tools in English and Hindi on a phone.
+- [ ] 5.3 Deploy the backend (`09 §6`); set env vars; confirm `/api/health` (not run; deployment not approved).
+- [ ] 5.4 Deploy the frontend to Vercel with `VITE_API_BASE_URL`; add `vercel.json` SPA rewrite (not run; deployment not approved; rewrite already exists).
+- [ ] 5.5 Tighten `ALLOWED_ORIGINS` to the deployed frontend URL; re-test CORS (production deployment not run).
+- [ ] 5.6 Production smoke test of all four tools in English and Hindi on a phone (blocked pending deployment and real inference verification).
 - [ ] 5.7 Final README: what it is, screenshots, quickstart, env vars, architecture diagram.
 
 **Gate 5:** deployed URL passes the production smoke test on a real phone and a laptop.
+
+**Verified progress (2026-10-29):**
+
+- Backend hardening is committed as `eaa2385`; the backend suite passes **46 tests**. Production CORS validation, request-size limits, and safe provider logging are covered by tests. The placeholder-only environment templates and ignored local `.env` files were checked.
+- Frontend API envelope/health validation, production mock gating, and duplicate-submit guards are committed as `5913747`; **6 frontend tests** and the production build pass.
+- Vite and React Router upgrades are committed as `295f144`; `npm audit` reports **0 vulnerabilities**. `pip-audit` reports no known vulnerabilities in declared requirements or installed backend packages after upgrading the local virtualenv's pip to 26.2.2 (the virtualenv is ignored and not committed).
+- Mock-mode browser checks exercised all four feature views, local history, saved plan-progress persistence after reload, language and theme persistence, keyboard focus visibility, the mobile navigation, and layouts at 360/768/1280 CSS pixels without horizontal overflow or browser console errors.
+- Live inference was attempted once for each endpoint in English on 2026-10-29. Explain returned `MODEL_UNAVAILABLE` (503), summarize returned `MODEL_OUTPUT_INVALID` (502), quiz returned `MODEL_UNAVAILABLE` (503), and study plan returned `MODEL_TIMEOUT` (504). The health endpoint reported a configured key, but that does not verify provider inference. Real inference acceptance is therefore **BLOCKED**; no successful live feature result is claimed.
+- Live deployment is **NOT RUN**. Accessibility review is partial: browser keyboard focus visibility and mobile navigation were checked, but the complete keyboard-only/screen-reader/contrast checklist remains open.
+- Phase 5 remains in progress; Gate 5 is not passed. No hosting or publication has been performed.
 
 ---
 
@@ -131,3 +141,4 @@ Record deviations and decisions here as you go so the specs stay truthful:
 | 2026-10-28 | Phase 4.3 | Added an early theme restore to prevent a wrong-theme flash, global keyboard focus indicators, and readable disabled action styles in both themes. Verified light/dark/system persistence and OS changes, all feature/history views, 360 px layout, focus visibility, and no browser console errors. | No |
 | 2026-10-28 | Phase 4.5 | Persisted session check-offs under each plan's local history ID, added an accessible percentage progress bar, and surfaced storage failures without hiding current changes. Verified toggling, keyboard activation, reload, independent plans, empty plans, malformed progress, and quota failure with mock data. | No |
 | 2026-10-28 | Phase 4.4, 4.6, 4.7 | Verified quiz score persistence and History statistics, fixed quiz-from-saved-result prefill, and moved `?demo=1` seeding to app startup. Expanded the demo quiz to five questions and removed a React warning from score persistence. Mock-browser checks covered all four tools, history prefill, score stats across reload, and demo seeding; the production build passed. Live Hindi model output remains unverified because no backend API key is configured. | No |
+| 2026-10-29 | Phase 5 (partial) | Hardened backend and frontend API handling, upgraded vulnerable frontend dependencies, audited Python packages, and updated deployment guidance. Backend tests 46/46, frontend tests 6/6, production build passed, npm audit 0 findings, pip-audit 0 findings after updating ignored virtualenv pip. Mock-browser acceptance passed for the listed flows. Four live endpoint attempts failed with safe provider/model error envelopes; real inference and deployment remain blocked/not run. | Yes |

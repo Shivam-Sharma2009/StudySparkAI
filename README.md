@@ -71,6 +71,7 @@ The checked-in frontend environment template sets `VITE_USE_MOCKS=true`, so the 
 | `RATE_LIMIT` | `20/minute` | Per-client request limit. |
 | `MODEL_TIMEOUT_SECONDS` | `30` | Backend model-call timeout. |
 | `LOG_LEVEL` | `INFO` | Backend logging level. |
+| `APP_ENV` | `development` | Use `production` on the deployed backend to disable interactive API docs and enforce production CORS settings. |
 
 ### Frontend (`frontend/.env`)
 
@@ -80,6 +81,33 @@ The checked-in frontend environment template sets `VITE_USE_MOCKS=true`, so the 
 | `VITE_USE_MOCKS` | `true` | Set to `false` to send requests to the backend. |
 
 **Keep `GEMINI_API_KEY` only in `backend/.env`.** Never put it in a `VITE_*` variable or frontend source; Vite variables are exposed to the browser. Do not commit `.env` files. Use the `.env.example` templates instead.
+
+## Deployment preparation
+
+The project is prepared for separate frontend and backend hosting; it has not been deployed.
+
+### Backend
+
+- Use `backend` as the service root and install with `pip install -r requirements.txt`.
+- Start from that directory with `uvicorn main:app --host 0.0.0.0 --port $PORT` (use the host's assigned port).
+- Configure `APP_ENV=production`, `GEMINI_API_KEY`, `GEMMA_MODEL`, and `ALLOWED_ORIGINS` in the host's secret/environment settings. Set `ALLOWED_ORIGINS` to the exact deployed frontend origin, including its scheme and without a path. Production rejects wildcard and localhost origins.
+- `GET /api/health` is the health-check path. A successful response and `ai_configured: true` confirm the API is responding and a non-empty key is configured; they do **not** prove the provider accepts the key or that inference succeeds.
+- Keep debug off and do not expose the API key through frontend configuration or logs.
+
+### Frontend
+
+- Use `frontend` as the service root, run `npm run build`, and publish `dist`.
+- Set the public build variable `VITE_API_BASE_URL` to the backend URL (no trailing slash). Set `VITE_USE_MOCKS=false`; mock fixtures are also disabled in production builds even if this variable is accidentally set to `true`.
+- The existing [frontend/vercel.json](./frontend/vercel.json) provides the SPA rewrite needed for client-side routes.
+
+### Release verification and troubleshooting
+
+1. Deploy neither service until hosting and publication are explicitly approved.
+2. After backend configuration, check `/api/health`, then make one manual feature request in English and Hindi. Real requests consume provider quota; automated tests use deterministic mocks.
+3. Configure the backend CORS allowlist with the exact deployed frontend origin and confirm the frontend can call the health endpoint.
+4. Run all four feature flows against the deployed URL on desktop and a phone. A health check only tests backend availability, not real model inference.
+5. If the UI reports the backend offline on local development, use `http://localhost:5173` and `http://localhost:8000` consistently, or add the exact alternate origin (such as `http://127.0.0.1:5173`) to development CORS settings.
+6. For `MODEL_UNAVAILABLE`, `MODEL_TIMEOUT`, or `MODEL_OUTPUT_INVALID`, check the configured model ID, provider status, key validity, quota, and backend logs. The API returns safe error envelopes and does not substitute mock output for failed live requests.
 
 ## Tests and checks
 
@@ -99,6 +127,7 @@ Build the frontend from the `frontend` directory:
 
 ```powershell
 npm run build
+npm test
 ```
 
 ## API overview

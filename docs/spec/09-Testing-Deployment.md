@@ -91,11 +91,15 @@ The MVP is accepted when the Definition of Done in `02-TRD.md §11` is true and 
 | Root directory | `backend` |
 | Runtime | Python 3.11+ (pin with `.python-version` or `runtime.txt`) |
 | Build command | `pip install -r requirements.txt` |
-| Start command | `uvicorn main:app --host 0.0.0.0 --port $PORT` |
+| Start command | `uvicorn main:app --host 0.0.0.0 --port $PORT` (run from `backend`) |
 | Health check path | `/api/health` |
-| Env vars | `GEMINI_API_KEY`, `GEMMA_MODEL`, `ALLOWED_ORIGINS` (the Vercel URL), `RATE_LIMIT`, `MODEL_TIMEOUT_SECONDS`, `LOG_LEVEL` |
+| Env vars | `APP_ENV=production`, `GEMINI_API_KEY`, `GEMMA_MODEL`, `ALLOWED_ORIGINS` (exact frontend origin), `RATE_LIMIT`, `MODEL_TIMEOUT_SECONDS`, `LOG_LEVEL` |
 
-Notes: free tiers may sleep when idle (hence the wake-up banner). Railway, Fly.io and Cloud Run use the same start command and variables. Verify current free-tier limits on the host's site.
+Set `APP_ENV=production` to disable interactive API documentation and enforce explicit non-local CORS origins. Do not use `*` or localhost origins in production. Keep the Gemini key in the backend host's secret store, never in a `VITE_*` variable.
+
+The health endpoint reports backend availability and whether a non-empty key is configured. It does not call the model or verify the key with the provider. After configuration, make a manual inference request to verify the provider, model ID, quota, and output validation. This consumes provider quota; do not put live inference calls in CI.
+
+The host should supply `PORT`; run Uvicorn from the `backend` directory and bind to `0.0.0.0`. Free tiers may sleep when idle (hence the wake-up banner). Railway, Fly.io, and Cloud Run use the same start command and variables. Verify current runtime and free-tier limits on the host's site.
 
 ### 6.2 Frontend (Vercel)
 
@@ -105,7 +109,9 @@ Notes: free tiers may sleep when idle (hence the wake-up banner). Railway, Fly.i
 | Framework preset | Vite |
 | Build command | `npm run build` |
 | Output directory | `dist` |
-| Env var | `VITE_API_BASE_URL` = backend URL (no trailing slash) |
+| Env vars | `VITE_API_BASE_URL` = public backend URL (no trailing slash); `VITE_USE_MOCKS=false` |
+
+`VITE_API_BASE_URL` is public browser configuration; never put API keys or credentials in any `VITE_*` variable. Mock fixtures are gated to development mode and cannot be enabled in a production build.
 
 `frontend/vercel.json` (needed because of client-side routing at `/history`):
 ```json
@@ -113,14 +119,17 @@ Notes: free tiers may sleep when idle (hence the wake-up banner). Railway, Fly.i
 ```
 
 ### 6.3 Order of operations
-1. Deploy the backend with `ALLOWED_ORIGINS=http://localhost:5173` and confirm `/api/health`.
-2. Deploy the frontend with `VITE_API_BASE_URL`.
-3. Set backend `ALLOWED_ORIGINS` to the Vercel URL (add the localhost origin too if you still develop locally); redeploy.
-4. Run the production smoke test: all four tools, English and Hindi, on a phone.
+1. After deployment is approved, configure the backend secret/environment variables, including `APP_ENV=production` and a temporary or final explicit frontend origin. Do not use a wildcard or a localhost origin in production.
+2. Confirm `/api/health` returns successfully. Remember that `ai_configured` only reports whether a non-empty key is present; it does not test inference.
+3. Deploy the frontend with `VITE_API_BASE_URL` and `VITE_USE_MOCKS=false`.
+4. Set backend `ALLOWED_ORIGINS` to the exact deployed frontend origin and redeploy the backend if the value changed.
+5. Verify the CORS response from the deployed frontend, then run one real request for each feature in English and Hindi on a phone and laptop. Confirm valid success envelopes and readable outputs. These requests use provider quota.
+
+Do not treat the deployment gate as passed until the deployed URL has been tested on both phone and laptop. A local build, health check, or mock-mode test is not a production smoke test.
 
 ### 6.4 Local development
 - Backend: `uvicorn main:app --reload --port 8000`
-- Frontend: `npm run dev` (port 5173); backend origin `http://localhost:5173` must be in `ALLOWED_ORIGINS`.
+- Frontend: `npm run dev` (port 5173); backend origin `http://localhost:5173` must be in `ALLOWED_ORIGINS`. Use `localhost` consistently; if using `127.0.0.1`, add that exact origin to development CORS settings.
 - Frontend without a backend: `VITE_USE_MOCKS=true`.
 
 ### 6.5 Demo-day operations
