@@ -32,19 +32,17 @@ const ACTIVITY_COLORS = {
 
 export function StudyPlanResult({ plan, planId, language = 'en' }) {
   const { t } = useSettings();
+  const { planProgress, updatePlanProgress, storageWarning } = useStudyHistory();
   const [copied, setCopied] = useState(false);
-  const [completedSessions, setCompletedSessions] = useState({});
+  const completedSessions = planId ? (planProgress[planId] || {}) : {};
   const headingRef = useRef(null);
 
   useEffect(() => {
     headingRef.current?.focus();
   }, [plan]);
 
-  const toggleSession = (sessionId) => {
-    setCompletedSessions((prev) => ({
-      ...prev,
-      [sessionId]: !prev[sessionId],
-    }));
+  const toggleSession = (sessionId, completed) => {
+    if (planId) updatePlanProgress(planId, sessionId, completed);
   };
 
   const allSessions = [];
@@ -53,7 +51,9 @@ export function StudyPlanResult({ plan, planId, language = 'en' }) {
   });
 
   const totalSessionsCount = allSessions.length;
-  const completedCount = Object.values(completedSessions).filter(Boolean).length;
+  const completedCount = allSessions.filter((session) =>
+    session.id && completedSessions[session.id] === true
+  ).length;
   const progressPercent = totalSessionsCount
     ? Math.round((completedCount / totalSessionsCount) * 100)
     : 0;
@@ -147,7 +147,14 @@ export function StudyPlanResult({ plan, planId, language = 'en' }) {
               {t('sessionsDone', { done: completedCount, total: totalSessionsCount, percent: progressPercent })}
             </span>
           </div>
-          <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+          <div
+            role="progressbar"
+            aria-label={t('sessionProgress')}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={progressPercent}
+            className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden"
+          >
             <div
               className="h-full bg-indigo-600 dark:bg-indigo-400 transition-all duration-300"
               style={{ width: `${progressPercent}%` }}
@@ -202,12 +209,11 @@ export function StudyPlanResult({ plan, planId, language = 'en' }) {
                         ACTIVITY_COLORS[sess.activity] || ACTIVITY_COLORS.learn;
 
                       return (
-                        <div
+                        <label
                           key={sess.id}
-                          onClick={() => toggleSession(sess.id)}
                           className={`p-3 rounded-lg border text-xs flex items-center justify-between gap-3 cursor-pointer transition ${
                             isDone
-                              ? 'bg-gray-50 dark:bg-gray-900/40 border-gray-200 dark:border-gray-800 opacity-60'
+                              ? 'bg-gray-50 dark:bg-gray-900/40 border-gray-200 dark:border-gray-800'
                               : 'bg-white dark:bg-[#181B24] border-gray-200 dark:border-gray-700/80 hover:border-indigo-400'
                           }`}
                         >
@@ -215,7 +221,11 @@ export function StudyPlanResult({ plan, planId, language = 'en' }) {
                             <input
                               type="checkbox"
                               checked={isDone}
-                              onChange={() => {}}
+                              onChange={(event) => toggleSession(sess.id, event.target.checked)}
+                              aria-label={t('sessionTaskLabel', {
+                                subject: sess.subject,
+                                topic: sess.topic,
+                              })}
                               className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                             />
                             <div>
@@ -238,7 +248,7 @@ export function StudyPlanResult({ plan, planId, language = 'en' }) {
                           <div className="text-right flex-shrink-0 font-medium text-gray-500 dark:text-gray-400">
                             {sess.minutes} min
                           </div>
-                        </div>
+                        </label>
                       );
                     })
                   )}
@@ -265,6 +275,7 @@ export function StudyPlanResult({ plan, planId, language = 'en' }) {
           </ul>
         </div>
       )}
+      <HistoryStorageNotice warning={storageWarning} />
     </article>
   );
 }

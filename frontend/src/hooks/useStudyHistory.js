@@ -263,19 +263,19 @@ export function useStudyHistory() {
   }, []);
 
   const updatePlanProgress = useCallback((planId, sessionId, completed) => {
-    setPlanProgress((prev) => {
-      const next = {
-        ...prev,
-        [planId]: {
-          ...(prev[planId] || {}),
-          [sessionId]: completed,
-        },
-      };
-      if (!safeSet(PLAN_PROGRESS_KEY, next).saved) setStorageWarning('unavailable');
-      window.dispatchEvent(new Event('studyspark:history_updated'));
-      return next;
-    });
-  }, []);
+    if (!planId || !sessionId || typeof completed !== 'boolean') return;
+    const next = {
+      ...planProgress,
+      [planId]: {
+        ...(planProgress[planId] || {}),
+        [sessionId]: completed,
+      },
+    };
+    const saved = safeSet(PLAN_PROGRESS_KEY, next).saved;
+    setPlanProgress(next);
+    setStorageWarning(saved ? '' : 'progressUnavailable');
+    if (saved) window.dispatchEvent(new Event('studyspark:history_updated'));
+  }, [planProgress]);
 
   // Demo seeding helper (?demo=1)
   const seedDemoData = useCallback(() => {
