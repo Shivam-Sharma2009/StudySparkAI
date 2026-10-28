@@ -79,7 +79,7 @@ Spec references: API → `05`, prompts → `06`, design → `03`, UI → `07`, t
 
 - [ ] 5.1 Run the edge-case list in `09 §3–4`; fix failures (local resilience cases verified; live provider cases blocked).
 - [ ] 5.2 Accessibility pass from `07 §7` (keyboard-only run of all four tools, focus management, contrast).
-- [ ] 5.3 Verify production settings, environment templates, secret handling, and CORS configuration locally without deploying.
+- [x] 5.3 Verify production settings, environment templates, secret handling, and CORS configuration locally without deploying.
 - [ ] 5.4 Complete the README with verified features, screenshots, quickstart, environment variables, and architecture diagram (content and diagram added; project screenshots remain outstanding).
 
 **Gate 5:** local backend/frontend tests, production build, dependency audits, and the feasible local edge-case/accessibility checks pass. Record live-provider or browser/device checks that cannot be completed locally as blocked; deployment is explicitly deferred to the final phase.
@@ -99,6 +99,17 @@ Spec references: API → `05`, prompts → `06`, design → `03`, UI → `07`, t
 - README quickstart, environment configuration, hosting guidance, and an architecture diagram are present. Project screenshots are not included; task 5.4 remains open.
 - Deployment is **NOT RUN** and is deferred; no hosting or publication has been performed.
 - Phase 5 remains in progress; Gate 5 is not passed.
+
+**Gate 5 verification update (2026-10-29):**
+
+- Backend tests: **46 passed**, **7 deprecation warnings** on Python 3.14.4. Coverage includes request/schema limits, health response, standardized validation/provider errors, timeout mapping, missing API key behavior, safe provider-error logging, and CORS.
+- Frontend tests: **6 passed**. Production build: **passed** with `VITE_USE_MOCKS=true` in the build environment; mock responses remain development-only. Frontend source inspection confirms real request failures return user-visible errors rather than mock fixtures.
+- Dependency audits: `npm audit --audit-level=low` found **0 vulnerabilities**. `pip-audit` found no known vulnerabilities in declared requirements or the installed backend environment. The audit utility was installed only in the ignored backend virtualenv; dependency manifests and lockfiles were not changed.
+- Local production-config smoke check: Uvicorn started with `APP_ENV=production` and a single explicit HTTPS origin; `/api/health` returned 200, the configured CORS origin was allowed and an unlisted origin was rejected, and `/docs` plus `/openapi.json` returned 404. No model requests were made.
+- Secret handling: `backend/.env` is ignored and not tracked; only `.env.example` templates are tracked. A local scan of 55 tracked files found no common API-key, token, or private-key signatures; values were not emitted.
+- Feature review: the four panels still use their respective `api.js` endpoints; successful results alone are saved to local history, quiz scoring remains connected, and plan progress remains keyed by plan. No feature source changes were needed.
+- Remaining test gap: `RATE_LIMIT=20/minute` is configured, but there is no dedicated test for the documented 21st-request `429` case. No live model calls were made; real inference remains **BLOCKED** based on the earlier provider failures.
+- Gate 5 remains **not passed**: the rate-limit edge-case test, remaining accessibility checks (full-app contrast, screen-reader announcements, and 200% zoom), and README screenshots remain open. Deployment is **NOT RUN** and remains deferred to Phase 8.
 
 ---
 
