@@ -297,7 +297,7 @@ export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz })
             type="button"
             onClick={handleCheckAnswer}
             disabled={selectedOption === null}
-            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs sm:text-sm shadow-sm transition"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-700 dark:disabled:text-gray-200 disabled:opacity-100 text-white font-semibold text-xs sm:text-sm shadow-sm transition"
           >
             {t('checkAnswer')}
           </button>
@@ -432,7 +432,7 @@ export default function QuizPanel({ initialContent = '' }) {
         <button
           type="submit"
           disabled={status === 'loading' || !isValid}
-          className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
+          className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-700 dark:disabled:text-gray-200 disabled:opacity-100 text-white font-semibold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
         >
           <Sparkles className="w-4 h-4" />
           <span>{status === 'loading' ? t('generatingQuiz') : t('generateQuiz')}</span>

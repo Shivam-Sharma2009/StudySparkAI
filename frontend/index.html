@@ -5,6 +5,19 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>StudySpark AI ⚡ — Learn Smarter, Not Harder</title>
+    <script>
+      try {
+        const settings = JSON.parse(localStorage.getItem('studyspark:settings:v1') || 'null');
+        const theme = ['light', 'dark', 'system'].includes(settings?.theme) ? settings.theme : 'system';
+        const language = ['en', 'hi'].includes(settings?.language) ? settings.language : 'en';
+        const dark = theme === 'dark' ||
+          (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.classList.toggle('dark', dark);
+        document.documentElement.lang = language;
+      } catch {
+        document.documentElement.lang = 'en';
+      }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
