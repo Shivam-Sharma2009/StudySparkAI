@@ -5,6 +5,7 @@ import { ExplainResult } from '../components/ExplainPanel';
 import { SummaryResult } from '../components/SummaryPanel';
 import { QuizResult } from '../components/QuizPanel';
 import { StudyPlanResult } from '../components/StudyPlanPanel';
+import { HistoryStorageNotice } from '../components/StatusMessage';
 import {
   History,
   BookOpen,
@@ -52,7 +53,7 @@ const TYPE_CONFIG = {
 
 export default function StudyHistory({ onNavigateToTool }) {
   const { t } = useSettings();
-  const { history, removeEntry, clearHistory, stats, seedDemoData } = useStudyHistory();
+  const { history, removeEntry, clearHistory, stats, seedDemoData, storageWarning } = useStudyHistory();
   const [activeTab, setActiveTab] = useState('all');
   const [viewingItem, setViewingItem] = useState(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -295,13 +296,18 @@ export default function StudyHistory({ onNavigateToTool }) {
                           हिन्दी
                         </span>
                       )}
+                      {Number.isFinite(item.score) && Number.isFinite(item.total) && (
+                        <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                          {t('historyScore', { score: item.score, total: item.total })}
+                        </span>
+                      )}
                     </div>
 
                     <p
                       className="text-sm font-semibold text-gray-900 dark:text-gray-100 line-clamp-2"
                       lang={item.language || 'en'}
                     >
-                      {item.result?.title || item.inputPreview || t('savedSession')}
+                      {item.title || t('savedSession')}
                     </p>
                   </div>
                 </div>
@@ -364,6 +370,7 @@ export default function StudyHistory({ onNavigateToTool }) {
           </div>
         </div>
       )}
+      <HistoryStorageNotice warning={storageWarning} />
     </div>
   );
 }

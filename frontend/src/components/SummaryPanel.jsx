@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSettings } from '../context/SettingsContext';
 import { useStudyHistory } from '../hooks/useStudyHistory';
 import { summarizeNotes } from '../services/api';
-import StatusMessage from './StatusMessage';
+import StatusMessage, { HistoryStorageNotice } from './StatusMessage';
 import { FileText, Copy, Check, ArrowRight, Sparkles } from 'lucide-react';
 
 export function SummaryResult({ result, onQuizMe, language = 'en' }) {
@@ -134,7 +134,7 @@ export function SummaryResult({ result, onQuizMe, language = 'en' }) {
 
 export default function SummaryPanel({ onQuizMe }) {
   const { language, t, formatError } = useSettings();
-  const { addEntry } = useStudyHistory();
+  const { addEntry, storageWarning } = useStudyHistory();
   const [notes, setNotes] = useState('');
   const [length, setLength] = useState('short'); // short | medium
   const [status, setStatus] = useState('idle');
@@ -164,8 +164,7 @@ export default function SummaryPanel({ onQuizMe }) {
       addEntry({
         type: 'summary',
         language,
-        inputPreview: notes.trim().slice(0, 100),
-        request: { notes: notes.trim(), length, language },
+        title: t('notesSummary'),
         result: response.data,
       });
     } catch (err) {
@@ -292,6 +291,7 @@ export default function SummaryPanel({ onQuizMe }) {
         {status === 'idle' && !result && (
           <StatusMessage type="empty" message={t('pasteNotes')} />
         )}
+        {status === 'success' && <HistoryStorageNotice warning={storageWarning} />}
       </div>
     </div>
   );

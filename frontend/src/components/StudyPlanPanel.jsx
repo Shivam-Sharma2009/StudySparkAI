@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSettings } from '../context/SettingsContext';
+import { useStudyHistory } from '../hooks/useStudyHistory';
 import { generateStudyPlan } from '../services/api';
-import StatusMessage from './StatusMessage';
+import StatusMessage, { HistoryStorageNotice } from './StatusMessage';
 import {
   Calendar,
   Plus,
@@ -29,7 +30,7 @@ const ACTIVITY_COLORS = {
   test: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20',
 };
 
-export function StudyPlanResult({ plan, language = 'en' }) {
+export function StudyPlanResult({ plan, planId, language = 'en' }) {
   const { t } = useSettings();
   const [copied, setCopied] = useState(false);
   const [completedSessions, setCompletedSessions] = useState({});
@@ -270,6 +271,7 @@ export function StudyPlanResult({ plan, language = 'en' }) {
 
 export default function StudyPlanPanel() {
   const { language, t, formatError } = useSettings();
+  const { addEntry, storageWarning } = useStudyHistory();
   const [subjects, setSubjects] = useState([
     { name: 'Physics', deadline: '', topics: 'Mechanics, Electricity' },
     { name: 'Mathematics', deadline: '', topics: 'Calculus, Vectors' },
@@ -278,6 +280,7 @@ export default function StudyPlanPanel() {
   const [startDate, setStartDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [status, setStatus] = useState('idle');
   const [plan, setPlan] = useState(null);
+  const [planEntryId, setPlanEntryId] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleAddSubject = () => {
@@ -323,7 +326,14 @@ export default function StudyPlanPanel() {
         language,
       });
 
+      const entry = addEntry({
+        type: 'plan',
+        language,
+        title: t('dayStudyPlan', { days: response.data.horizon_days }),
+        result: response.data,
+      });
       setPlan(response.data);
+      setPlanEntryId(entry?.id || null);
       setStatus('success');
     } catch (err) {
       setErrorMessage(formatError(err) || t('couldNotCreatePlan'));
@@ -490,13 +500,16 @@ export default function StudyPlanPanel() {
         {status === 'error' && (
           <StatusMessage type="error" message={errorMessage} onRetry={handleSubmit} />
         )}
-        {status === 'success' && plan && <StudyPlanResult plan={plan} language={language} />}
+        {status === 'success' && plan && (
+          <StudyPlanResult plan={plan} planId={planEntryId} language={language} />
+        )}
         {status === 'idle' && !plan && (
           <StatusMessage
             type="empty"
             message={t('configurePlan')}
           />
         )}
+        {status === 'success' && <HistoryStorageNotice warning={storageWarning} />}
       </div>
     </div>
   );

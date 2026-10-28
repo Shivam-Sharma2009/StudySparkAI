@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSettings } from '../context/SettingsContext';
 import { useStudyHistory } from '../hooks/useStudyHistory';
 import { explainTopic } from '../services/api';
-import StatusMessage from './StatusMessage';
+import StatusMessage, { HistoryStorageNotice } from './StatusMessage';
 import { Sparkles, Copy, Check, ArrowRight } from 'lucide-react';
 
 const EXAMPLE_CHIPS = ["Photosynthesis", "Newton's third law", "Ohm's law"];
@@ -132,7 +132,7 @@ export function ExplainResult({ result, onQuizMe, language = 'en' }) {
 
 export default function ExplainPanel({ onQuizMe, initialTopic = '' }) {
   const { language, t, formatError } = useSettings();
-  const { addEntry } = useStudyHistory();
+  const { addEntry, storageWarning } = useStudyHistory();
   const [topic, setTopic] = useState(initialTopic);
   const [level, setLevel] = useState('beginner'); // beginner | intermediate | advanced
   const [status, setStatus] = useState('idle'); // idle | loading | success | error
@@ -158,8 +158,6 @@ export default function ExplainPanel({ onQuizMe, initialTopic = '' }) {
       addEntry({
         type: 'explain',
         language,
-        inputPreview: cleanTopic,
-        request: { topic: cleanTopic, level, language },
         result: response.data,
       });
     } catch (err) {
@@ -288,6 +286,7 @@ export default function ExplainPanel({ onQuizMe, initialTopic = '' }) {
         {status === 'idle' && !result && (
           <StatusMessage type="empty" message={t('enterTopic')} />
         )}
+        {status === 'success' && <HistoryStorageNotice warning={storageWarning} />}
       </div>
     </div>
   );

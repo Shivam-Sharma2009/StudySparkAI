@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSettings } from '../context/SettingsContext';
-import { Loader2, AlertCircle, Sparkles, RefreshCw } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Sparkles, RefreshCw } from 'lucide-react';
 
 export default function StatusMessage({
   type = 'empty',
@@ -20,7 +20,7 @@ export default function StatusMessage({
   useEffect(() => {
     if (type !== 'loading') return;
     const interval = setInterval(() => {
-      setTextIndex((prev) => (prev + 1) % ROTATING_TEXTS.length);
+      setTextIndex((prev) => (prev + 1) % rotatingTexts.length);
     }, 2200);
     return () => clearInterval(interval);
   }, [type]);
@@ -103,5 +103,20 @@ export default function StatusMessage({
         </p>
       </div>
     </div>
+  );
+}
+
+export function HistoryStorageNotice({ warning }) {
+  const { t } = useSettings();
+  if (!warning) return null;
+
+  return (
+    <p
+      role="status"
+      className="mt-3 flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-200"
+    >
+      <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+      <span>{t(warning === 'evicted' ? 'historyEvictedWarning' : 'historyUnavailableWarning')}</span>
+    </p>
   );
 }

@@ -4,42 +4,166 @@ const HISTORY_KEY = 'studyspark:history:v1';
 const QUIZ_SCORES_KEY = 'studyspark:quizScores:v1';
 const PLAN_PROGRESS_KEY = 'studyspark:planProgress:v1';
 const MAX_ENTRIES = 50;
+const HISTORY_TYPES = new Set(['explain', 'summary', 'quiz', 'plan']);
+
+function isValidResult(type, result) {
+  if (!result || typeof result !== 'object' || Array.isArray(result)) return false;
+  if (type === 'explain') {
+    return typeof result.title === 'string' &&
+      typeof result.explanation === 'string' &&
+      Array.isArray(result.key_points);
+  }
+  if (type === 'summary') {
+    return typeof result.summary === 'string' &&
+      Array.isArray(result.key_points) &&
+      (!result.key_terms || Array.isArray(result.key_terms));
+  }
+  if (type === 'quiz') {
+    return Array.isArray(result.questions) && result.questions.every((question) =>
+      question &&
+      typeof question.question === 'string' &&
+      Array.isArray(question.options) &&
+      question.options.length === 4 &&
+      Number.isInteger(question.correct_index) &&
+      question.correct_index >= 0 &&
+      question.correct_index < 4
+    );
+  }
+  if (type === 'plan') {
+    return Array.isArray(result.days) && result.days.every((day) =>
+      day && Array.isArray(day.sessions)
+    );
+  }
+  return false;
+}
+
+function normalizeHistory(items) {
+  if (!Array.isArray(items)) return [];
+  return items
+    .filter((item) =>
+      item &&
+      typeof item === 'object' &&
+      typeof item.id === 'string' &&
+      HISTORY_TYPES.has(item.type) &&
+      isValidResult(item.type, item.result)
+    )
+    .map((item) => {
+      const timestamp = Date.parse(item.createdAt);
+      const titleCandidate = item.title || item.result.title || item.result.topic ||
+        (item.type === 'summary' ? 'Notes Summary' : 'Study Plan');
+      return {
+        id: item.id,
+        type: item.type,
+        title: typeof titleCandidate === 'string' && titleCandidate.trim()
+          ? titleCandidate.trim().slice(0, 100)
+          : 'Study Activity',
+        createdAt: Number.isFinite(timestamp)
+          ? new Date(timestamp).toISOString()
+          : new Date(0).toISOString(),
+        language: item.language === 'hi' ? 'hi' : 'en',
+        result: item.result,
+        ...(Number.isFinite(item.score) && Number.isFinite(item.total) && item.total > 0
+          ? { score: item.score, total: item.total }
+          : {}),
+      };
+    })
+    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
+    .slice(0, MAX_ENTRIES);
+}
+
+function normalizeQuizScores(items) {
+  if (!Array.isArray(items)) return [];
+  return items.filter((item) =>
+    item &&
+    typeof item === 'object' &&
+    typeof item.entryId === 'string' &&
+    Number.isFinite(item.score) &&
+    Number.isFinite(item.total) &&
+    item.total > 0
+  );
+}
+
+function normalizePlanProgress(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([, sessions]) => sessions && typeof sessions === 'object' && !Array.isArray(sessions))
+      .map(([planId, sessions]) => [
+        planId,
+        Object.fromEntries(
+          Object.entries(sessions).filter(([, completed]) => typeof completed === 'boolean')
+        ),
+      ])
+  );
+}
 
 function safeGet(key, fallback) {
   try {
     const raw = window.localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    if (key === HISTORY_KEY) return normalizeHistory(parsed);
+    if (key === QUIZ_SCORES_KEY) return normalizeQuizScores(parsed);
+    if (key === PLAN_PROGRESS_KEY) return normalizePlanProgress(parsed);
+    return parsed;
   } catch (err) {
     console.warn(`Error reading localStorage key "${key}":`, err);
     return fallback;
   }
 }
 
-function safeSet(key, value) {
+function safeSet(key, value, logError = true) {
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
-    return true;
+    return { saved: true, error: null };
   } catch (err) {
-    console.warn(`Error writing localStorage key "${key}":`, err);
-    return false;
+    if (logError) console.warn(`Error writing localStorage key "${key}":`, err);
+    return { saved: false, error: err };
   }
+}
+
+function isQuotaError(error) {
+  return error?.name === 'QuotaExceededError' || error?.code === 22 || error?.code === 1014;
 }
 
 export function useStudyHistory() {
   const [history, setHistory] = useState(() => safeGet(HISTORY_KEY, []));
   const [quizScores, setQuizScores] = useState(() => safeGet(QUIZ_SCORES_KEY, []));
   const [planProgress, setPlanProgress] = useState(() => safeGet(PLAN_PROGRESS_KEY, {}));
+  const [storageWarning, setStorageWarning] = useState('');
 
   // Sync state to localStorage with quota-safe eviction
   const persistHistory = useCallback((items) => {
-    let toSave = items.slice(0, MAX_ENTRIES);
-    let success = safeSet(HISTORY_KEY, toSave);
-    while (!success && toSave.length > 1) {
-      toSave.pop(); // Evict oldest
-      success = safeSet(HISTORY_KEY, toSave);
+    const toSave = normalizeHistory(items);
+    let write = safeSet(HISTORY_KEY, toSave);
+    let evicted = false;
+    while (!write.saved && isQuotaError(write.error) && toSave.length > 1) {
+      toSave.pop();
+      evicted = true;
+      write = safeSet(HISTORY_KEY, toSave, false);
     }
-    setHistory(toSave);
-    window.dispatchEvent(new Event('studyspark:history_updated'));
+    const success = write.saved;
+    setHistory(success ? toSave : normalizeHistory(items));
+    setStorageWarning(success ? (evicted ? 'evicted' : '') : 'unavailable');
+    if (success) {
+      window.dispatchEvent(new Event('studyspark:history_updated'));
+    }
+    return success;
+  }, []);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(HISTORY_KEY);
+      if (raw === null) return;
+      const parsed = JSON.parse(raw);
+      const normalized = normalizeHistory(parsed);
+      if (JSON.stringify(parsed) !== JSON.stringify(normalized) && !safeSet(HISTORY_KEY, normalized).saved) {
+        setStorageWarning('unavailable');
+      }
+    } catch (err) {
+      console.warn('Error migrating local study history:', err);
+      if (!safeSet(HISTORY_KEY, []).saved) setStorageWarning('unavailable');
+    }
   }, []);
 
   // Listen for storage / custom sync events
@@ -58,48 +182,70 @@ export function useStudyHistory() {
   }, []);
 
   const addEntry = useCallback(
-    ({ type, language = 'en', inputPreview = '', request = {}, result = {} }) => {
+    ({ type, language = 'en', title, result = {} }) => {
+      if (!HISTORY_TYPES.has(type) || !isValidResult(type, result)) {
+        console.warn('Skipped saving invalid study history entry.');
+        return null;
+      }
       const id = `h_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
       const newEntry = {
         id,
         type,
+        title: (title || result.title || result.topic || (type === 'summary' ? 'Notes Summary' : 'Study Plan'))
+          .toString()
+          .slice(0, 100),
         createdAt: new Date().toISOString(),
-        language,
-        inputPreview: (inputPreview || '').slice(0, 120),
-        request,
+        language: language === 'hi' ? 'hi' : 'en',
         result,
       };
 
-      setHistory((prev) => {
-        const next = [newEntry, ...prev.filter((i) => i.id !== id)].slice(0, MAX_ENTRIES);
-        persistHistory(next);
-        return next;
-      });
+      persistHistory([newEntry, ...history.filter((item) => item.id !== id)]);
 
       return newEntry;
     },
-    [persistHistory]
+    [history, persistHistory]
   );
 
   const removeEntry = useCallback(
     (id) => {
-      setHistory((prev) => {
-        const next = prev.filter((item) => item.id !== id);
-        safeSet(HISTORY_KEY, next);
-        window.dispatchEvent(new Event('studyspark:history_updated'));
+      persistHistory(history.filter((item) => item.id !== id));
+      setQuizScores((previous) => {
+        const next = previous.filter((score) => score.entryId !== id);
+        if (!safeSet(QUIZ_SCORES_KEY, next).saved) setStorageWarning('unavailable');
         return next;
       });
+      setPlanProgress((previous) => {
+        const next = { ...previous };
+        delete next[id];
+        if (!safeSet(PLAN_PROGRESS_KEY, next).saved) setStorageWarning('unavailable');
+        return next;
+      });
+      window.dispatchEvent(new Event('studyspark:history_updated'));
     },
-    []
+    [history, persistHistory]
   );
 
   const clearHistory = useCallback(() => {
     setHistory([]);
-    safeSet(HISTORY_KEY, []);
+    setQuizScores([]);
+    setPlanProgress({});
+    const historySaved = safeSet(HISTORY_KEY, []).saved;
+    const scoresSaved = safeSet(QUIZ_SCORES_KEY, []).saved;
+    const progressSaved = safeSet(PLAN_PROGRESS_KEY, {}).saved;
+    setStorageWarning(historySaved && scoresSaved && progressSaved ? '' : 'unavailable');
     window.dispatchEvent(new Event('studyspark:history_updated'));
   }, []);
 
+  const updateEntryScore = useCallback((entryId, score, total) => {
+    if (!entryId || !Number.isFinite(score) || !Number.isFinite(total) || total < 1) return;
+    const next = history.map((entry) =>
+      entry.id === entryId ? { ...entry, score, total } : entry
+    );
+    persistHistory(next);
+  }, [history, persistHistory]);
+
   const saveQuizScore = useCallback(({ entryId, topic, score, total, difficulty }) => {
+    if (!Number.isFinite(score) || !Number.isFinite(total) || total < 1) return;
     const scoreRecord = {
       entryId: entryId || `q_${Date.now()}`,
       topic: topic || 'Quiz',
@@ -110,8 +256,8 @@ export function useStudyHistory() {
     };
     setQuizScores((prev) => {
       const next = [scoreRecord, ...prev].slice(0, 100);
-      safeSet(QUIZ_SCORES_KEY, next);
-      window.dispatchEvent(new Event('studyspark:history_updated'));
+      if (!safeSet(QUIZ_SCORES_KEY, next).saved) setStorageWarning('unavailable');
+      else window.dispatchEvent(new Event('studyspark:history_updated'));
       return next;
     });
   }, []);
@@ -125,7 +271,7 @@ export function useStudyHistory() {
           [sessionId]: completed,
         },
       };
-      safeSet(PLAN_PROGRESS_KEY, next);
+      if (!safeSet(PLAN_PROGRESS_KEY, next).saved) setStorageWarning('unavailable');
       window.dispatchEvent(new Event('studyspark:history_updated'));
       return next;
     });
@@ -290,6 +436,8 @@ export function useStudyHistory() {
     addEntry,
     removeEntry,
     clearHistory,
+    updateEntryScore,
+    storageWarning,
     quizScores,
     saveQuizScore,
     planProgress,

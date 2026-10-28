@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSettings } from '../context/SettingsContext';
 import { useStudyHistory } from '../hooks/useStudyHistory';
 import { generateQuiz } from '../services/api';
-import StatusMessage from './StatusMessage';
+import StatusMessage, { HistoryStorageNotice } from './StatusMessage';
 import { CheckCircle2, Check, X, RotateCcw, Plus, Sparkles, HelpCircle } from 'lucide-react';
 
 export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz }) {
@@ -317,7 +317,7 @@ export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz })
 
 export default function QuizPanel({ initialContent = '' }) {
   const { language, t, formatError } = useSettings();
-  const { addEntry, saveQuizScore } = useStudyHistory();
+  const { addEntry, saveQuizScore, updateEntryScore, storageWarning } = useStudyHistory();
   const [content, setContent] = useState(initialContent);
   const [difficulty, setDifficulty] = useState('medium'); // easy | medium | hard
   const [status, setStatus] = useState('idle');
@@ -345,8 +345,6 @@ export default function QuizPanel({ initialContent = '' }) {
       const entry = addEntry({
         type: 'quiz',
         language,
-        inputPreview: content.trim().slice(0, 100),
-        request: { content: content.trim(), difficulty, language },
         result: response.data,
       });
       setLastEntryId(entry?.id);
@@ -453,19 +451,23 @@ export default function QuizPanel({ initialContent = '' }) {
             onNewQuiz={() => setStatus('idle')}
             language={language}
             onCompleteQuiz={({ score, total }) =>
-              saveQuizScore({
-                entryId: lastEntryId,
-                topic: quiz.topic,
-                score,
-                total,
-                difficulty,
-              })
+              {
+                updateEntryScore(lastEntryId, score, total);
+                saveQuizScore({
+                  entryId: lastEntryId,
+                  topic: quiz.topic,
+                  score,
+                  total,
+                  difficulty,
+                });
+              }
             }
           />
         )}
         {status === 'idle' && !quiz && (
           <StatusMessage type="empty" message={t('launchQuiz')} />
         )}
+        {status === 'success' && <HistoryStorageNotice warning={storageWarning} />}
       </div>
     </div>
   );
