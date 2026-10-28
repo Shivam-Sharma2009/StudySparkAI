@@ -77,13 +77,13 @@ Spec references: API → `05`, prompts → `06`, design → `03`, UI → `07`, t
 
 ## Phase 5 — Harden and deploy (≈ 2–3 h)
 
-- [ ] 5.1 Run the edge-case list in `09 §3–4`; fix failures.
+- [ ] 5.1 Run the edge-case list in `09 §3–4`; fix failures (local resilience cases verified; live provider cases blocked).
 - [ ] 5.2 Accessibility pass from `07 §7` (keyboard-only run of all four tools, focus management, contrast).
 - [ ] 5.3 Deploy the backend (`09 §6`); set env vars; confirm `/api/health` (not run; deployment not approved).
 - [ ] 5.4 Deploy the frontend to Vercel with `VITE_API_BASE_URL`; add `vercel.json` SPA rewrite (not run; deployment not approved; rewrite already exists).
 - [ ] 5.5 Tighten `ALLOWED_ORIGINS` to the deployed frontend URL; re-test CORS (production deployment not run).
 - [ ] 5.6 Production smoke test of all four tools in English and Hindi on a phone (blocked pending deployment and real inference verification).
-- [ ] 5.7 Final README: what it is, screenshots, quickstart, env vars, architecture diagram.
+- [ ] 5.7 Final README: what it is, screenshots, quickstart, env vars, architecture diagram (README content and diagram added; project screenshots remain outstanding).
 
 **Gate 5:** deployed URL passes the production smoke test on a real phone and a laptop.
 
@@ -93,8 +93,12 @@ Spec references: API → `05`, prompts → `06`, design → `03`, UI → `07`, t
 - Frontend API envelope/health validation, production mock gating, and duplicate-submit guards are committed as `5913747`; **6 frontend tests** and the production build pass.
 - Vite and React Router upgrades are committed as `295f144`; `npm audit` reports **0 vulnerabilities**. `pip-audit` reports no known vulnerabilities in declared requirements or installed backend packages after upgrading the local virtualenv's pip to 26.2.2 (the virtualenv is ignored and not committed).
 - Mock-mode browser checks exercised all four feature views, local history, saved plan-progress persistence after reload, language and theme persistence, keyboard focus visibility, the mobile navigation, and layouts at 360/768/1280 CSS pixels without horizontal overflow or browser console errors.
+- Additional browser resilience checks on 2026-10-29 injected malformed history/progress/settings JSON, denied localStorage access, and a simulated quota failure. The app recovered from malformed data; successful results remained visible when writes failed and a history-save warning was shown. A rapid double-click produced one saved activity. These are local mock-mode checks, not live API or deployed checks.
+- Production CORS configuration was loaded with `APP_ENV=production` and an explicit HTTPS origin; the app had debug disabled and docs/OpenAPI routes disabled. Local CORS allowed `http://localhost:5173` and omitted `http://127.0.0.1:5173`, as configured.
+- The production build succeeded with `VITE_USE_MOCKS=true` in the build environment. A production-preview browser submission attempted the backend and showed the expected friendly network error when the preview origin was not in the local backend CORS allowlist; it did not substitute mock content.
 - Live inference was attempted once for each endpoint in English on 2026-10-29. Explain returned `MODEL_UNAVAILABLE` (503), summarize returned `MODEL_OUTPUT_INVALID` (502), quiz returned `MODEL_UNAVAILABLE` (503), and study plan returned `MODEL_TIMEOUT` (504). The health endpoint reported a configured key, but that does not verify provider inference. Real inference acceptance is therefore **BLOCKED**; no successful live feature result is claimed.
-- Live deployment is **NOT RUN**. Accessibility review is partial: browser keyboard focus visibility and mobile navigation were checked, but the complete keyboard-only/screen-reader/contrast checklist remains open.
+- Live deployment is **NOT RUN**. Accessibility review is partial: keyboard-visible focus, input labels, quiz radio-group semantics, mobile navigation, and layouts were checked, but the complete keyboard-only result-focus, screen-reader announcements, touch-target/200% zoom, and WCAG contrast checklist remains open.
+- README quickstart, environment configuration, hosting guidance, and an architecture diagram are present. Project screenshots are not included; task 5.7 remains open.
 - Phase 5 remains in progress; Gate 5 is not passed. No hosting or publication has been performed.
 
 ---

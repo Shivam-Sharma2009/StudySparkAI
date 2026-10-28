@@ -21,6 +21,27 @@ The interface supports English and Hindi AI responses, light and dark themes, an
 - AI: Gemma 4 via Google's `google-genai` SDK
 - Browser storage: `localStorage`; no account or application database
 
+## Architecture
+
+```text
+┌─────────────────────────────────────┐
+│ Browser: Vite + React               │
+│ UI, language/theme, local history   │
+└──────────────────┬──────────────────┘
+                   │ HTTPS/JSON
+                   ▼
+┌─────────────────────────────────────┐
+│ FastAPI backend                     │
+│ validation, rate limit, CORS,        │
+│ provider error handling              │
+└──────────────────┬──────────────────┘
+                   │ backend-only key
+                   ▼
+┌─────────────────────────────────────┐
+│ Gemini API: configured Gemma model  │
+└─────────────────────────────────────┘
+```
+
 ## Run locally (Windows PowerShell)
 
 Use two PowerShell terminals from the repository root.
