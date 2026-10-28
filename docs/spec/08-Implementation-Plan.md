@@ -66,10 +66,10 @@ Spec references: API → `05`, prompts → `06`, design → `03`, UI → `07`, t
 - [x] 4.1 **(E1, Should)** Language toggle wired into every request; Hindi text renders in Noto Sans Devanagari with correct line height; `lang` attribute on results.
 - [x] 4.2 **(E2, Should)** `useStudyHistory` hook; auto-save on success; `StudyHistory` page with tabs, open read-only result (reuse `*Result` components), delete, clear all with confirm.
 - [x] 4.3 **(E3, Should)** Dark mode polish across all components; verify contrast.
-- [ ] 4.4 **(E4, Could)** Quiz scores stored; History stats strip (taken, best, average).
+- [x] 4.4 **(E4, Could)** Quiz scores stored; History stats strip (taken, best, average).
 - [x] 4.5 **(E5, Could)** Study-plan session check-offs persisted in `studyspark:planProgress:v1`; progress bar.
-- [ ] 4.6 **(E6, Could)** "Quiz me on this" button on Explain/Summary results → switches to Quiz with the content prefilled.
-- [ ] 4.7 **(Could)** `?demo=1` seeds localStorage with sample history entries for the demo.
+- [x] 4.6 **(E6, Could)** "Quiz me on this" button on Explain/Summary results → switches to Quiz with the content prefilled.
+- [x] 4.7 **(Could)** `?demo=1` seeds localStorage with sample history entries for the demo.
 
 **Gate 4:** Hindi flow works end to end; history survives refresh; dark mode has no unreadable elements.
 
@@ -130,3 +130,4 @@ Record deviations and decisions here as you go so the specs stay truthful:
 | 2026-10-28 | Phase 4.2 | Saved successful outputs locally without API request payloads, added safe normalization/migration, quota-aware writes, score display, and history reopen/delete/clear. Browser checks covered all four mock features, reload, malformed storage, delete, clear, and quota failure. | No |
 | 2026-10-28 | Phase 4.3 | Added an early theme restore to prevent a wrong-theme flash, global keyboard focus indicators, and readable disabled action styles in both themes. Verified light/dark/system persistence and OS changes, all feature/history views, 360 px layout, focus visibility, and no browser console errors. | No |
 | 2026-10-28 | Phase 4.5 | Persisted session check-offs under each plan's local history ID, added an accessible percentage progress bar, and surfaced storage failures without hiding current changes. Verified toggling, keyboard activation, reload, independent plans, empty plans, malformed progress, and quota failure with mock data. | No |
+| 2026-10-28 | Phase 4.4, 4.6, 4.7 | Verified quiz score persistence and History statistics, fixed quiz-from-saved-result prefill, and moved `?demo=1` seeding to app startup. Expanded the demo quiz to five questions and removed a React warning from score persistence. Mock-browser checks covered all four tools, history prefill, score stats across reload, and demo seeding; the production build passed. Live Hindi model output remains unverified because no backend API key is configured. | No |

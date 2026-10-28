@@ -32,6 +32,14 @@ export default function Home({
     setActiveTool('quiz');
   };
 
+  const handleHistoryNavigation = (tool, content) => {
+    if (tool === 'quiz' && content) {
+      handleQuizMe(content);
+      return;
+    }
+    setActiveTool(tool);
+  };
+
   if (activeTool === 'explain') {
     return <ExplainPanel onQuizMe={handleQuizMe} />;
   }
@@ -49,7 +57,7 @@ export default function Home({
   }
 
   if (activeTool === 'history') {
-    return <StudyHistory onNavigateToTool={setActiveTool} />;
+    return <StudyHistory onNavigateToTool={handleHistoryNavigation} />;
   }
 
   // Dashboard Overview (Default)

@@ -254,13 +254,12 @@ export function useStudyHistory() {
       difficulty: difficulty || 'medium',
       takenAt: new Date().toISOString(),
     };
-    setQuizScores((prev) => {
-      const next = [scoreRecord, ...prev].slice(0, 100);
-      if (!safeSet(QUIZ_SCORES_KEY, next).saved) setStorageWarning('unavailable');
-      else window.dispatchEvent(new Event('studyspark:history_updated'));
-      return next;
-    });
-  }, []);
+    const next = [scoreRecord, ...quizScores].slice(0, 100);
+    const saved = safeSet(QUIZ_SCORES_KEY, next).saved;
+    setQuizScores(next);
+    setStorageWarning(saved ? '' : 'unavailable');
+    if (saved) window.dispatchEvent(new Event('studyspark:history_updated'));
+  }, [quizScores]);
 
   const updatePlanProgress = useCallback((planId, sessionId, completed) => {
     if (!planId || !sessionId || typeof completed !== 'boolean') return;
@@ -332,6 +331,8 @@ export function useStudyHistory() {
         language: 'en',
         inputPreview: 'Physics: Mechanics and Forces quiz',
         request: { content: 'Mechanics and Newton laws', difficulty: 'medium', language: 'en' },
+        score: 2,
+        total: 5,
         result: {
           topic: 'Newtonian Mechanics',
           difficulty: 'medium',
@@ -349,6 +350,32 @@ export function useStudyHistory() {
               options: ['E = mc²', 'F = m × a', 'P = V × I', 'V = I × R'],
               correct_index: 1,
               explanation: 'Force equals mass times acceleration (F = ma).',
+            },
+            {
+              id: 'q3',
+              question: "Which statement describes Newton's third law?",
+              options: [
+                'For every action, there is an equal and opposite reaction.',
+                'An object keeps moving unless acted on by a net force.',
+                'Force equals mass multiplied by acceleration.',
+                'Energy cannot be created or destroyed.',
+              ],
+              correct_index: 0,
+              explanation: 'Forces occur in equal and opposite pairs between interacting objects.',
+            },
+            {
+              id: 'q4',
+              question: 'What is the SI unit of force?',
+              options: ['Joule', 'Newton', 'Watt', 'Pascal'],
+              correct_index: 1,
+              explanation: 'Force is measured in newtons, named after Isaac Newton.',
+            },
+            {
+              id: 'q5',
+              question: 'If the same net force acts on a larger mass, what happens to its acceleration?',
+              options: ['It increases.', 'It stays the same.', 'It decreases.', 'It becomes zero.'],
+              correct_index: 2,
+              explanation: 'From F = ma, acceleration decreases as mass increases for a fixed force.',
             },
           ],
         },
@@ -400,22 +427,10 @@ export function useStudyHistory() {
       entryId: 'h_demo_quiz',
       topic: 'Newtonian Mechanics',
       score: 2,
-      total: 2,
+      total: 5,
       difficulty: 'medium',
     });
   }, [persistHistory, saveQuizScore]);
-
-  // Check URL param ?demo=1 on load
-  useEffect(() => {
-    try {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('demo') === '1' && history.length === 0) {
-        seedDemoData();
-      }
-    } catch {
-      // ignore in non-browser env
-    }
-  }, [history.length, seedDemoData]);
 
   // Statistics
   const quizCount = quizScores.length;

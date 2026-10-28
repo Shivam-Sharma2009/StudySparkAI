@@ -118,7 +118,20 @@ export function ExplainResult({ result, onQuizMe, language = 'en' }) {
       {onQuizMe && (
         <div className="pt-2 flex justify-end">
           <button
-            onClick={() => onQuizMe(result.title)}
+            onClick={() =>
+              onQuizMe(
+                [
+                  result.title,
+                  result.explanation,
+                  result.example,
+                  ...(result.key_points || []),
+                  result.quick_recap,
+                ]
+                  .filter(Boolean)
+                  .join('\n\n')
+                  .slice(0, 6000)
+              )
+            }
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
           >
             <span>{t('quizOnTopic')}</span>
