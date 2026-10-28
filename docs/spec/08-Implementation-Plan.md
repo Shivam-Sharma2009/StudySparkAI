@@ -117,8 +117,28 @@ Spec references: API → `05`, prompts → `06`, design → `03`, UI → `07`, t
 
 - [ ] 6.1 Rehearse `10-Demo-Pitch.md` twice with a timer.
 - [ ] 6.2 Record a 2-minute backup screen recording of the full flow.
-- [ ] 6.3 Warm the backend 5 minutes before presenting; keep one pre-generated result per tool in History (`?demo=1`).
+- [ ] 6.3 Warm the backend 5 minutes before presenting; manually verify one successful live result per tool in History. `?demo=1` sample History is fallback material, not proof of live inference.
 - [ ] 6.4 Check quota and API key validity the same day.
+- [x] 6.5 Make `?demo=1` seed exactly one valid sample for each tool only when History is empty; preserve existing History, reject invalid seed data, handle unavailable storage safely, and use current consecutive plan dates. Focused tests and an isolated browser check pass.
+
+### Demo-day checklist
+
+**Live-ready — all checks must pass before presenting live AI:**
+
+- [ ] Start the backend and verify `/api/health`; treat `ai_configured` as configuration only, not proof of inference.
+- [ ] Run a real, successful smoke request for Explain, Summary, Quiz, and Study Plan; confirm the results render and are saved in History. Do not make paid calls during routine tests.
+- [ ] Confirm provider quota and key validity without exposing the key.
+- [ ] Confirm the browser points to the intended backend and `VITE_USE_MOCKS=false`; test the presentation browser, zoom, tabs, and notifications.
+- [ ] Rehearse the full pitch twice and have a working two-minute offline recording.
+
+**Fallback-ready — fixture/history fallback only:**
+
+- [x] `?demo=1` safely seeds four sample History entries in an isolated empty browser profile; existing History is preserved, invalid seed data is rejected, and plan dates follow the current date.
+- [ ] Verify the four saved samples are visible in the actual presentation browser before demo day.
+- [ ] Record and test playback of the full-flow backup recording.
+- Note: seeded History is static sample content. It does not enable API mocks, contact the model, or demonstrate that live inference works.
+
+**Phase 6 gate: NOT PASSED.** Automated sample seeding is verified. Rehearsal, recording, day-of backend/quota checks, and live inference smoke tests remain manual; the last recorded live provider attempts failed, so live readiness remains **BLOCKED** until retested successfully.
 
 ---
 

@@ -6,10 +6,11 @@ import Sidebar, { BottomTabBar } from './components/Sidebar';
 import Home from './pages/Home';
 import { useStudyHistory } from './hooks/useStudyHistory';
 import { checkHealth } from './services/api';
+import { isDemoMode } from './services/demoData';
 
 function AppContent() {
   const { t } = useSettings();
-  const { history, seedDemoData } = useStudyHistory();
+  const { seedDemoData } = useStudyHistory();
   const [activeTool, setActiveTool] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [health, setHealth] = useState(null);
@@ -37,11 +38,10 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('demo') === '1' && history.length === 0) {
+    if (isDemoMode(window.location.search)) {
       seedDemoData();
     }
-  }, [history.length, seedDemoData]);
+  }, [seedDemoData]);
 
   return (
     <div className="min-h-screen bg-[#FAFAF7] dark:bg-[#0F1117] text-[#1B1B1F] dark:text-[#ECEDF2] transition-colors flex flex-col">

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { getDemoPlanDates, seedDemoHistory } from '../services/demoData';
 
 const HISTORY_KEY = 'studyspark:history:v1';
 const QUIZ_SCORES_KEY = 'studyspark:quizScores:v1';
@@ -278,6 +279,7 @@ export function useStudyHistory() {
 
   // Demo seeding helper (?demo=1)
   const seedDemoData = useCallback(() => {
+    const planDates = getDemoPlanDates();
     const demoEntries = [
       {
         id: 'h_demo_explain',
@@ -394,7 +396,7 @@ export function useStudyHistory() {
           days: [
             {
               day: 1,
-              date: '2026-10-28',
+              date: planDates[0],
               sessions: [
                 { id: 's1', subject: 'Physics', topic: 'Kinematics & Newton Laws', minutes: 120, activity: 'learn' },
                 { id: 's2', subject: 'Chemistry', topic: 'Atomic Structure', minutes: 120, activity: 'practice' },
@@ -402,7 +404,7 @@ export function useStudyHistory() {
             },
             {
               day: 2,
-              date: '2026-10-29',
+              date: planDates[1],
               sessions: [
                 { id: 's3', subject: 'Physics', topic: 'Work, Energy & Power', minutes: 120, activity: 'practice' },
                 { id: 's4', subject: 'Chemistry', topic: 'Chemical Bonding', minutes: 120, activity: 'learn' },
@@ -410,7 +412,7 @@ export function useStudyHistory() {
             },
             {
               day: 3,
-              date: '2026-10-30',
+              date: planDates[2],
               sessions: [
                 { id: 's5', subject: 'Physics', topic: 'Mock Test & Formula Revision', minutes: 120, activity: 'test' },
                 { id: 's6', subject: 'Chemistry', topic: 'Practice Questions & Recap', minutes: 120, activity: 'revise' },
@@ -422,7 +424,15 @@ export function useStudyHistory() {
       },
     ];
 
-    persistHistory(demoEntries);
+    const seedResult = seedDemoHistory(window, demoEntries, normalizeHistory);
+    if (seedResult.status === 'preserved' || seedResult.status === 'invalid') return false;
+    if (seedResult.status === 'unavailable') {
+      setStorageWarning('unavailable');
+      return false;
+    }
+
+    setHistory(seedResult.entries);
+    setStorageWarning('');
     saveQuizScore({
       entryId: 'h_demo_quiz',
       topic: 'Newtonian Mechanics',
@@ -430,7 +440,8 @@ export function useStudyHistory() {
       total: 5,
       difficulty: 'medium',
     });
-  }, [persistHistory, saveQuizScore]);
+    return true;
+  }, [saveQuizScore]);
 
   // Statistics
   const quizCount = quizScores.length;

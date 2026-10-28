@@ -18,7 +18,21 @@
 | 2:45 | Open **History**, then toggle dark mode | "Everything is saved on the device, no login needed." |
 | 2:55 | Close | "Built with Gemma 4, an open model, FastAPI and React." |
 
-**Pre-demo checklist:** backend warmed · API key and quota verified · seeded history (`?demo=1`) · notes text ready in a file · browser zoom 100% · notifications off · backup recording ready.
+### Demo-day checklist
+
+**Live-ready** — use the live pitch only after each item is verified:
+
+- [ ] Backend `/api/health` responds. `ai_configured` only confirms a non-empty key is configured; it does not prove inference.
+- [ ] Real, successful smoke requests work for all four features and their results are saved in History.
+- [ ] Provider key validity and quota are checked privately; never show or log the key.
+- [ ] Presentation browser uses the intended backend with `VITE_USE_MOCKS=false`; zoom is 100%, notifications are off, and notes are ready locally.
+- [ ] Rehearse twice and test the offline backup recording.
+
+**Fallback-ready** — if live inference is blocked:
+
+- [x] `?demo=1` seeds four static sample History records in an empty browser profile without overwriting existing History; invalid seed data is rejected and plan dates are current.
+- [ ] Verify those samples in the presentation browser and have the tested backup recording ready.
+- Seeded History is sample content only; it is not evidence that the backend or model is live.
 
 ## 2. Pitch outline (6–8 slides)
 

@@ -1,5 +1,9 @@
 // Mock fixtures for StudySpark AI frontend development per 05-API-Spec
 
+import { getDemoPlanDates } from './demoData';
+
+const MOCK_PLAN_DATES = getDemoPlanDates();
+
 export const mockHealth = {
   status: "ok",
   ai_configured: false,
@@ -82,7 +86,7 @@ export const mockPlanData = {
   days: [
     {
       day: 1,
-      date: "2026-10-27",
+      date: MOCK_PLAN_DATES[0],
       sessions: [
         { id: "d1-s1", subject: "Physics", topic: "Electricity basics", minutes: 90, activity: "learn" },
         { id: "d1-s2", subject: "Maths", topic: "Chapter overview", minutes: 60, activity: "learn" },
@@ -91,7 +95,7 @@ export const mockPlanData = {
     },
     {
       day: 2,
-      date: "2026-10-28",
+      date: MOCK_PLAN_DATES[1],
       sessions: [
         { id: "d2-s1", subject: "Physics", topic: "Magnetism", minutes: 90, activity: "learn" },
         { id: "d2-s2", subject: "Maths", topic: "Problem practice", minutes: 90, activity: "practice" }
@@ -99,7 +103,7 @@ export const mockPlanData = {
     },
     {
       day: 3,
-      date: "2026-10-29",
+      date: MOCK_PLAN_DATES[2],
       sessions: [
         { id: "d3-s1", subject: "Physics", topic: "Full revision", minutes: 90, activity: "revise" },
         { id: "d3-s2", subject: "Physics", topic: "Mini test", minutes: 60, activity: "test" },
