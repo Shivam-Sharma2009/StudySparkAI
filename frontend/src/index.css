@@ -30,6 +30,13 @@
   --danger: #F87171;
 }
 
+.text-gray-400,
+.text-gray-500,
+.dark .text-gray-400,
+.dark .text-gray-500 {
+  color: var(--text-muted) !important;
+}
+
 body {
   margin: 0;
   background-color: var(--bg);
