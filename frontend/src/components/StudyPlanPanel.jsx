@@ -318,6 +318,7 @@ export default function StudyPlanPanel() {
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
+    if (status === 'loading') return;
     if (!isValid) return;
 
     setStatus('loading');

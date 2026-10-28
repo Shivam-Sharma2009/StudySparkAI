@@ -519,10 +519,11 @@ export function SettingsProvider({ children }) {
       MODEL_TIMEOUT: 'errorTimeout',
       CLIENT_TIMEOUT: 'errorTimeout',
       NETWORK_ERROR: 'errorNetwork',
+      INVALID_RESPONSE: 'errorGeneric',
       INTERNAL_ERROR: 'errorGeneric',
     };
     const key = errorKeys[error?.code];
-    return key ? t(key) : error?.message || t('errorGeneric');
+    return key ? t(key) : t('errorGeneric');
   };
 
   return (

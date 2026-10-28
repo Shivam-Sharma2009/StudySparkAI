@@ -329,6 +329,7 @@ export default function QuizPanel({ initialContent = '' }) {
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
+    if (status === 'loading') return;
     if (!isValid) return;
 
     setStatus('loading');

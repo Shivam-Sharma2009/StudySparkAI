@@ -154,6 +154,7 @@ export default function ExplainPanel({ onQuizMe, initialTopic = '' }) {
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
+    if (status === 'loading') return;
     const cleanTopic = topic.trim();
     if (cleanTopic.length < 3) return;
 

@@ -1,17 +1,15 @@
 import { mockHealth, mockExplainData, mockSummaryData, mockQuizData, mockPlanData, mockErrors } from './mocks';
+import {
+  ApiError,
+  isValidFeatureData,
+  parseApiResponse,
+  parseHealthResponse,
+  shouldUseMocks,
+} from './apiResponse';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
-
-export class ApiError extends Error {
-  constructor(code, message, retryable = true, details = null) {
-    super(message);
-    this.name = 'ApiError';
-    this.code = code;
-    this.retryable = retryable;
-    this.details = details;
-  }
-}
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/+$/, '');
+const USE_MOCKS = shouldUseMocks(import.meta.env.DEV, import.meta.env.VITE_USE_MOCKS === 'true');
+export { ApiError };
 
 /**
  * Health check helper (GET /api/health)
@@ -26,20 +24,21 @@ export async function checkHealth() {
     };
   }
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
-    const res = await fetch(`${API_BASE_URL}/api/health`, {
+    const response = await fetch(`${API_BASE_URL}/api/health`, {
       signal: controller.signal
     });
-    clearTimeout(timeoutId);
-
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-    return await res.json();
+    return await parseHealthResponse(response);
   } catch (err) {
+    if (err instanceof ApiError) throw err;
+    if (err.name === 'AbortError') {
+      throw new ApiError('CLIENT_TIMEOUT', 'Health check took too long. Please try again.', true);
+    }
     throw new ApiError('NETWORK_ERROR', 'Could not reach backend health check.', true);
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
@@ -92,7 +91,7 @@ export async function apiRequest(endpoint, payload, fixtureKey = null) {
   const timeoutId = setTimeout(() => controller.abort(), 70000); // 70s timeout
 
   try {
-    const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -100,21 +99,16 @@ export async function apiRequest(endpoint, payload, fixtureKey = null) {
       body: JSON.stringify(payload),
       signal: controller.signal,
     });
-    clearTimeout(timeoutId);
-
-    const json = await res.json();
-    if (!json.ok) {
-      const err = json.error || {};
+    const result = await parseApiResponse(response);
+    if (!isValidFeatureData(fixtureKey, result.data)) {
       throw new ApiError(
-        err.code || 'INTERNAL_ERROR',
-        err.message || 'An unexpected error occurred.',
-        err.retryable !== false,
-        err.details
+        'INVALID_RESPONSE',
+        'The study engine returned an invalid response. Please try again.',
+        false
       );
     }
-    return json;
+    return result;
   } catch (err) {
-    clearTimeout(timeoutId);
     if (err instanceof ApiError) {
       throw err;
     }
@@ -122,6 +116,8 @@ export async function apiRequest(endpoint, payload, fixtureKey = null) {
       throw new ApiError('CLIENT_TIMEOUT', 'Request took too long. Please try again.', true);
     }
     throw new ApiError('NETWORK_ERROR', 'Cannot connect to StudySpark server. Please check your connection.', true);
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
