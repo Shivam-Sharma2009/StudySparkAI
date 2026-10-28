@@ -29,7 +29,8 @@ const ACTIVITY_COLORS = {
   test: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20',
 };
 
-export function StudyPlanResult({ plan }) {
+export function StudyPlanResult({ plan, language = 'en' }) {
+  const { t } = useSettings();
   const [copied, setCopied] = useState(false);
   const [completedSessions, setCompletedSessions] = useState({});
   const headingRef = useRef(null);
@@ -83,6 +84,7 @@ export function StudyPlanResult({ plan }) {
 
   return (
     <article
+      lang={language || 'en'}
       className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#181B24] border border-[#E5E3DA] dark:border-[#2C3140] shadow-sm space-y-6"
       aria-labelledby="plan-result-title"
     >
@@ -90,7 +92,7 @@ export function StudyPlanResult({ plan }) {
       <div className="flex items-start justify-between gap-4 border-b border-gray-100 dark:border-gray-800 pb-4">
         <div>
           <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 block mb-1">
-            Personalized Roadmap
+            {t('personalizedRoadmap')}
           </span>
           <h2
             id="plan-result-title"
@@ -98,7 +100,7 @@ export function StudyPlanResult({ plan }) {
             tabIndex={-1}
             className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 outline-none"
           >
-            {plan.horizon_days}-Day Study Plan
+            {t('dayStudyPlan', { days: plan.horizon_days })}
           </h2>
         </div>
 
@@ -110,12 +112,12 @@ export function StudyPlanResult({ plan }) {
           {copied ? (
             <>
               <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span className="text-emerald-600 dark:text-emerald-400">Copied!</span>
+              <span className="text-emerald-600 dark:text-emerald-400">{t('copied')}</span>
             </>
           ) : (
             <>
               <Copy className="w-3.5 h-3.5" />
-              <span>Copy as text</span>
+              <span>{t('copyAsText')}</span>
             </>
           )}
         </button>
@@ -129,7 +131,7 @@ export function StudyPlanResult({ plan }) {
       {/* Truncated notice if horizon exceeded 14 days */}
       {plan.truncated && (
         <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300">
-          Showing the first 14 days of your timeline. Generate again later for upcoming deadlines.
+          {t('truncatedPlan')}
         </div>
       )}
 
@@ -138,10 +140,10 @@ export function StudyPlanResult({ plan }) {
         <div className="p-4 rounded-xl bg-white dark:bg-[#181B24] border border-[#E5E3DA] dark:border-[#2C3140] space-y-2">
           <div className="flex items-center justify-between text-xs">
             <span className="font-semibold text-gray-700 dark:text-gray-300">
-              Session Progress
+              {t('sessionProgress')}
             </span>
             <span className="font-bold text-indigo-600 dark:text-indigo-400">
-              {completedCount} of {totalSessionsCount} done ({progressPercent}%)
+              {t('sessionsDone', { done: completedCount, total: totalSessionsCount, percent: progressPercent })}
             </span>
           </div>
           <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
@@ -156,7 +158,7 @@ export function StudyPlanResult({ plan }) {
       {/* Timeline Days */}
       <div className="space-y-4">
         <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-          Daily Schedule
+          {t('dailySchedule')}
         </h3>
 
         <div className="space-y-4">
@@ -177,11 +179,11 @@ export function StudyPlanResult({ plan }) {
                     <span className="w-5 h-5 rounded-md bg-indigo-600 text-white flex items-center justify-center text-[10px]">
                       {day.day}
                     </span>
-                    <span>Day {day.day}</span>
+                    <span>{t('dayNumber', { day: day.day })}</span>
                     <span className="text-gray-400 font-normal">· {day.date}</span>
                   </div>
                   <span className="text-gray-500 dark:text-gray-400 font-medium">
-                    {hasSessions ? `${totalMinutes} mins total` : 'Rest Day'}
+                    {hasSessions ? t('totalMinutes', { minutes: totalMinutes }) : t('restDay')}
                   </span>
                 </div>
 
@@ -189,7 +191,7 @@ export function StudyPlanResult({ plan }) {
                 <div className="p-3 space-y-2">
                   {!hasSessions ? (
                     <div className="py-2 text-center text-xs text-gray-400 italic flex items-center justify-center gap-1.5">
-                      <span>Rest day 🌿 Take time to recharge and consolidate memory.</span>
+                      <span>{t('restDayMessage')}</span>
                     </div>
                   ) : (
                     day.sessions.map((sess) => {
@@ -250,7 +252,7 @@ export function StudyPlanResult({ plan }) {
       {plan.tips && plan.tips.length > 0 && (
         <div className="p-4 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-900 space-y-2">
           <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-800 dark:text-indigo-300">
-            Study Strategies & Tips
+            {t('studyTips')}
           </h3>
           <ul className="space-y-1.5 text-xs text-indigo-950 dark:text-indigo-200">
             {plan.tips.map((tip, idx) => (
@@ -267,7 +269,7 @@ export function StudyPlanResult({ plan }) {
 }
 
 export default function StudyPlanPanel() {
-  const { language } = useSettings();
+  const { language, t, formatError } = useSettings();
   const [subjects, setSubjects] = useState([
     { name: 'Physics', deadline: '', topics: 'Mechanics, Electricity' },
     { name: 'Mathematics', deadline: '', topics: 'Calculus, Vectors' },
@@ -324,7 +326,7 @@ export default function StudyPlanPanel() {
       setPlan(response.data);
       setStatus('success');
     } catch (err) {
-      setErrorMessage(err.message || 'Could not create study plan. Please try again.');
+      setErrorMessage(formatError(err) || t('couldNotCreatePlan'));
       setStatus('error');
     }
   };
@@ -335,10 +337,10 @@ export default function StudyPlanPanel() {
       <div>
         <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 flex items-center gap-2">
           <span>📅</span>
-          <span>Generate Study Plan</span>
+          <span>{t('plan')}</span>
         </h2>
         <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Create an achievable, day-by-day timetable balanced around your deadlines and available study hours.
+          {t('planDescription')}
         </p>
       </div>
 
@@ -351,7 +353,7 @@ export default function StudyPlanPanel() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400">
-              Subjects (1 to 6)
+              {t('subjects')}
             </span>
             <span className="text-xs text-gray-400">{subjects.length} / 6</span>
           </div>
@@ -364,14 +366,15 @@ export default function StudyPlanPanel() {
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
-                    Subject #{idx + 1}
+                    {t('subject')} #{idx + 1}
                   </span>
                   {subjects.length > 1 && (
                     <button
                       type="button"
                       onClick={() => handleRemoveSubject(idx)}
                       className="text-gray-400 hover:text-red-500 transition p-1"
-                      title="Remove subject"
+                      title={t('removeSubject')}
+                      aria-label={t('removeSubject')}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -381,11 +384,11 @@ export default function StudyPlanPanel() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[11px] font-semibold text-gray-500 mb-1">
-                      Subject Name *
+                      {t('subjectName')}
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. Physics, Chemistry, World History"
+                      placeholder={t('subjectPlaceholder')}
                       value={sub.name}
                       maxLength={80}
                       onChange={(e) => handleSubjectChange(idx, 'name', e.target.value)}
@@ -396,7 +399,7 @@ export default function StudyPlanPanel() {
 
                   <div>
                     <label className="block text-[11px] font-semibold text-gray-500 mb-1">
-                      Target Deadline (Optional)
+                      {t('targetDeadline')}
                     </label>
                     <input
                       type="date"
@@ -409,11 +412,11 @@ export default function StudyPlanPanel() {
 
                 <div>
                   <label className="block text-[11px] font-semibold text-gray-500 mb-1">
-                    Specific Topics or Chapters (Optional)
+                    {t('topicsChapters')}
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Thermodynamics, Waves, Optics"
+                    placeholder={t('topicsPlaceholder')}
                     value={sub.topics}
                     maxLength={300}
                     onChange={(e) => handleSubjectChange(idx, 'topics', e.target.value)}
@@ -431,7 +434,7 @@ export default function StudyPlanPanel() {
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 transition"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Add another subject</span>
+              <span>{t('addSubject')}</span>
             </button>
           )}
         </div>
@@ -440,7 +443,7 @@ export default function StudyPlanPanel() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-gray-100 dark:border-gray-800">
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400 mb-1">
-              Daily Study Hours
+              {t('dailyStudyHours')}
             </label>
             <div className="flex items-center gap-3">
               <input
@@ -453,13 +456,13 @@ export default function StudyPlanPanel() {
                 className="w-32 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600"
                 required
               />
-              <span className="text-xs text-gray-500">hours / day (0.5 to 12)</span>
+              <span className="text-xs text-gray-500">{t('hoursPerDay')}</span>
             </div>
           </div>
 
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400 mb-1">
-              Start Date
+              {t('startDate')}
             </label>
             <input
               type="date"
@@ -477,21 +480,21 @@ export default function StudyPlanPanel() {
           className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
         >
           <Sparkles className="w-4 h-4" />
-          <span>{status === 'loading' ? 'Creating plan…' : 'Create my plan'}</span>
+          <span>{status === 'loading' ? t('creatingPlan') : t('createPlan')}</span>
         </button>
       </form>
 
       {/* Results / Status Area */}
       <div className="pt-2">
-        {status === 'loading' && <StatusMessage type="loading" message="Sequencing optimal study days…" />}
+        {status === 'loading' && <StatusMessage type="loading" message={t('sequencingPlan')} />}
         {status === 'error' && (
           <StatusMessage type="error" message={errorMessage} onRetry={handleSubmit} />
         )}
-        {status === 'success' && plan && <StudyPlanResult plan={plan} />}
+        {status === 'success' && plan && <StudyPlanResult plan={plan} language={language} />}
         {status === 'idle' && !plan && (
           <StatusMessage
             type="empty"
-            message="Configure your subjects and daily hours above to generate your study timetable."
+            message={t('configurePlan')}
           />
         )}
       </div>

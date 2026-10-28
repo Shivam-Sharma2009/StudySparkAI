@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { SettingsProvider } from './context/SettingsContext';
+import { useSettings } from './context/SettingsContext';
 import Header from './components/Header';
 import Sidebar, { BottomTabBar } from './components/Sidebar';
 import Home from './pages/Home';
 import { checkHealth } from './services/api';
 
 function AppContent() {
+  const { t } = useSettings();
   const [activeTool, setActiveTool] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [health, setHealth] = useState(null);
@@ -65,7 +67,7 @@ function AppContent() {
 
             {/* Footer */}
             <footer className="mt-12 pt-6 border-t border-[#E5E3DA] dark:border-[#2C3140] text-center text-xs text-gray-400 dark:text-gray-500">
-              AI can be wrong — verify important facts. Don't enter personal or sensitive information.
+              {t('safetyFooter')}
             </footer>
           </div>
         </main>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSettings } from '../context/SettingsContext';
 import {
   LayoutDashboard,
   BookOpen,
@@ -12,37 +13,37 @@ import {
 export const NAV_ITEMS = [
   {
     id: 'dashboard',
-    label: 'Dashboard',
+    labelKey: 'dashboard',
     icon: LayoutDashboard,
     badge: null,
   },
   {
     id: 'explain',
-    label: 'Explain a Topic',
+    labelKey: 'explain',
     icon: BookOpen,
     badge: 'Core',
   },
   {
     id: 'summary',
-    label: 'Summarize Notes',
+    labelKey: 'summary',
     icon: FileText,
     badge: 'Core',
   },
   {
     id: 'quiz',
-    label: 'Generate Quiz',
+    labelKey: 'quiz',
     icon: CheckCircle2,
     badge: '5 MCQs',
   },
   {
     id: 'plan',
-    label: 'Study Plan',
+    labelKey: 'plan',
     icon: Calendar,
     badge: 'Timeline',
   },
   {
     id: 'history',
-    label: 'Study History',
+    labelKey: 'history',
     icon: History,
     badge: null,
   },
@@ -54,6 +55,9 @@ export default function Sidebar({
   sidebarOpen,
   setSidebarOpen,
 }) {
+  const { t } = useSettings();
+  const badgeLabels = { Core: t('core'), '5 MCQs': t('fiveMcqs'), Timeline: t('timeline') };
+
   return (
     <>
       {/* Mobile / Tablet overlay backdrop */}
@@ -74,7 +78,7 @@ export default function Sidebar({
         {/* Navigation list */}
         <div className="p-3 space-y-1 overflow-y-auto">
           <div className="px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-            Study Tools
+            {t('navTools')}
           </div>
 
           {NAV_ITEMS.map((item) => {
@@ -103,7 +107,7 @@ export default function Sidebar({
                         : 'text-gray-400 dark:text-gray-500'
                     }`}
                   />
-                  <span>{item.label}</span>
+                  <span>{t(item.labelKey)}</span>
                 </div>
 
                 {item.badge && (
@@ -114,7 +118,7 @@ export default function Sidebar({
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                     }`}
                   >
-                    {item.badge}
+                    {badgeLabels[item.badge] || item.badge}
                   </span>
                 )}
               </button>
@@ -126,10 +130,10 @@ export default function Sidebar({
         <div className="p-3 m-3 rounded-xl bg-[#F1F0EA] dark:bg-[#20242F] border border-[#E5E3DA] dark:border-[#2C3140] text-[11px] text-gray-500 dark:text-gray-400 space-y-1">
           <div className="flex items-center gap-1.5 font-semibold text-gray-700 dark:text-gray-200">
             <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            <span>Gemma 4 Tutor</span>
+            <span>{t('tutorName')}</span>
           </div>
           <p className="leading-snug">
-            Accurate, structured explanations and study planning powered by Gemma.
+            {t('tutorDescription')}
           </p>
         </div>
       </aside>
@@ -141,11 +145,12 @@ export default function Sidebar({
  * Mobile Bottom Tab Bar (< 640px)
  */
 export function BottomTabBar({ activeTool, onSelectTool }) {
+  const { t } = useSettings();
   const bottomTools = [
-    { id: 'explain', label: 'Explain', icon: BookOpen },
-    { id: 'summary', label: 'Summary', icon: FileText },
-    { id: 'quiz', label: 'Quiz', icon: CheckCircle2 },
-    { id: 'plan', label: 'Plan', icon: Calendar },
+    { id: 'explain', label: t('explain'), icon: BookOpen },
+    { id: 'summary', label: t('summary'), icon: FileText },
+    { id: 'quiz', label: t('quiz'), icon: CheckCircle2 },
+    { id: 'plan', label: t('plan'), icon: Calendar },
   ];
 
   return (

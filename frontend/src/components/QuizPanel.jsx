@@ -6,6 +6,7 @@ import StatusMessage from './StatusMessage';
 import { CheckCircle2, Check, X, RotateCcw, Plus, Sparkles, HelpCircle } from 'lucide-react';
 
 export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz }) {
+  const { t } = useSettings();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
   const [checked, setChecked] = useState(false);
@@ -77,7 +78,7 @@ export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz })
       >
         <div className="text-center space-y-2 py-4 border-b border-gray-100 dark:border-gray-800">
           <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-            Quiz Completed
+            {t('quizCompleted')}
           </span>
           <h2
             id="quiz-result-summary"
@@ -89,10 +90,10 @@ export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz })
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {score === questions.length
-              ? '🎉 Outstanding! Perfect score!'
+              ? t('outstanding')
               : score >= 3
-              ? '👍 Solid work! Keep reinforcing key concepts.'
-              : '📚 Review the explanations below and try again!'}
+              ? t('solidWork')
+              : t('reviewAnswers')}
           </p>
 
           <div className="pt-3 flex justify-center gap-3">
@@ -101,7 +102,7 @@ export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz })
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-semibold text-gray-700 dark:text-gray-300 transition"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              Retake quiz
+              {t('retakeQuiz')}
             </button>
             {onNewQuiz && (
               <button
@@ -109,7 +110,7 @@ export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz })
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-xs font-semibold text-white transition"
               >
                 <Plus className="w-3.5 h-3.5" />
-                New quiz
+                {t('newQuiz')}
               </button>
             )}
           </div>
@@ -118,7 +119,7 @@ export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz })
         {/* Review list */}
         <div className="space-y-4">
           <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-            Question Review
+            {t('questionReview')}
           </h3>
           <div className="space-y-3">
             {questions.map((q, idx) => {
@@ -151,7 +152,7 @@ export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz })
                   <div className="pl-6 space-y-1 text-gray-600 dark:text-gray-400">
                     <div>
                       <span className="font-medium text-gray-700 dark:text-gray-300">
-                        Correct Answer:
+                        {t('correctAnswer')}
                       </span>{' '}
                       <span className="text-emerald-700 dark:text-emerald-300 font-semibold">
                         {q.options[q.correct_index]}
@@ -160,7 +161,7 @@ export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz })
                     {!isCorrect && userSelected !== undefined && (
                       <div>
                         <span className="font-medium text-gray-700 dark:text-gray-300">
-                          Your Answer:
+                          {t('yourAnswer')}
                         </span>{' '}
                         <span className="text-red-700 dark:text-red-300">
                           {q.options[userSelected]}
@@ -168,7 +169,7 @@ export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz })
                       </div>
                     )}
                     <div className="pt-1 italic text-gray-500 dark:text-gray-400">
-                      Why: {q.explanation}
+                      {t('why')} {q.explanation}
                     </div>
                   </div>
                 </div>
@@ -195,7 +196,7 @@ export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz })
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
           <span className="font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
-            Question {currentIndex + 1} of {questions.length}
+            {t('question')} {currentIndex + 1} {t('of')} {questions.length}
           </span>
           <span>Topic: {quiz.topic}</span>
         </div>
@@ -283,7 +284,7 @@ export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz })
       {checked && (
         <div className="p-3.5 rounded-xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900 text-xs leading-relaxed space-y-1 animate-fadeIn">
           <span className="font-bold text-indigo-700 dark:text-indigo-300 block">
-            Explanation:
+            {t('explanationLabel')}
           </span>
           <p className="text-gray-700 dark:text-gray-300">{currentQ.explanation}</p>
         </div>
@@ -298,7 +299,7 @@ export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz })
             disabled={selectedOption === null}
             className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs sm:text-sm shadow-sm transition"
           >
-            Check answer
+            {t('checkAnswer')}
           </button>
         ) : (
           <button
@@ -306,7 +307,7 @@ export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz })
             onClick={handleNext}
             className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition"
           >
-            {currentIndex < questions.length - 1 ? 'Next question →' : 'See results 🎉'}
+            {currentIndex < questions.length - 1 ? t('nextQuestion') : t('seeResults')}
           </button>
         )}
       </div>
@@ -315,7 +316,7 @@ export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz })
 }
 
 export default function QuizPanel({ initialContent = '' }) {
-  const { language } = useSettings();
+  const { language, t, formatError } = useSettings();
   const { addEntry, saveQuizScore } = useStudyHistory();
   const [content, setContent] = useState(initialContent);
   const [difficulty, setDifficulty] = useState('medium'); // easy | medium | hard
@@ -350,7 +351,7 @@ export default function QuizPanel({ initialContent = '' }) {
       });
       setLastEntryId(entry?.id);
     } catch (err) {
-      setErrorMessage(err.message || 'Could not generate quiz. Please try again.');
+      setErrorMessage(formatError(err) || t('couldNotGenerateQuiz'));
       setStatus('error');
     }
   };
@@ -361,10 +362,10 @@ export default function QuizPanel({ initialContent = '' }) {
       <div>
         <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 flex items-center gap-2">
           <span>🎯</span>
-          <span>Generate Quiz</span>
+          <span>{t('quiz')}</span>
         </h2>
         <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Create an interactive 5-question test with explanations to benchmark your recall.
+          {t('quizDescription')}
         </p>
       </div>
 
@@ -378,7 +379,7 @@ export default function QuizPanel({ initialContent = '' }) {
             htmlFor="quiz-content-input"
             className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400"
           >
-            Topic or Pasted Material
+            {t('topicOrMaterial')}
           </label>
           <textarea
             id="quiz-content-input"
@@ -386,12 +387,12 @@ export default function QuizPanel({ initialContent = '' }) {
             onChange={(e) => setContent(e.target.value)}
             rows={4}
             maxLength={6000}
-            placeholder="Enter a topic name (e.g. Indian Constitution, Photosynthesis) or paste notes to test on…"
+            placeholder={t('quizPlaceholder')}
             className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:focus:ring-indigo-400 transition"
             required
           />
           <div className="flex justify-between items-center text-[11px] text-gray-400">
-            <span>3 to 6000 characters</span>
+            <span>{t('quizChars')}</span>
             <span>{content.length} / 6000</span>
           </div>
         </div>
@@ -399,17 +400,17 @@ export default function QuizPanel({ initialContent = '' }) {
         {/* Difficulty Control */}
         <div className="space-y-1.5">
           <span className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400">
-            Difficulty
+            {t('difficulty')}
           </span>
           <div
             className="grid grid-cols-3 gap-1 p-1 max-w-md rounded-xl bg-[#F1F0EA] dark:bg-[#20242F] border border-[#E5E3DA] dark:border-[#2C3140]"
             role="radiogroup"
-            aria-label="Quiz difficulty"
+            aria-label={t('difficulty')}
           >
             {[
-              { id: 'easy', label: 'Easy', desc: 'Direct recall' },
-              { id: 'medium', label: 'Medium', desc: 'Application' },
-              { id: 'hard', label: 'Hard', desc: 'Deep reasoning' },
+              { id: 'easy', label: t('easy'), desc: 'Direct recall' },
+              { id: 'medium', label: t('medium'), desc: 'Application' },
+              { id: 'hard', label: t('hard'), desc: 'Deep reasoning' },
             ].map((diff) => (
               <button
                 type="button"
@@ -436,13 +437,13 @@ export default function QuizPanel({ initialContent = '' }) {
           className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
         >
           <Sparkles className="w-4 h-4" />
-          <span>{status === 'loading' ? 'Generating quiz…' : 'Generate quiz'}</span>
+          <span>{status === 'loading' ? t('generatingQuiz') : t('generateQuiz')}</span>
         </button>
       </form>
 
       {/* Quiz Area */}
       <div className="pt-2">
-        {status === 'loading' && <StatusMessage type="loading" message="Drafting 5 questions…" />}
+        {status === 'loading' && <StatusMessage type="loading" message={t('draftingQuestions')} />}
         {status === 'error' && (
           <StatusMessage type="error" message={errorMessage} onRetry={handleSubmit} />
         )}
@@ -463,7 +464,7 @@ export default function QuizPanel({ initialContent = '' }) {
           />
         )}
         {status === 'idle' && !quiz && (
-          <StatusMessage type="empty" message="Type a topic or paste study notes to launch your quiz." />
+          <StatusMessage type="empty" message={t('launchQuiz')} />
         )}
       </div>
     </div>

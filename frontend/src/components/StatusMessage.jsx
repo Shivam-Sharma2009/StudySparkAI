@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import { useSettings } from '../context/SettingsContext';
 import { Loader2, AlertCircle, Sparkles, RefreshCw } from 'lucide-react';
-
-const ROTATING_TEXTS = [
-  'Thinking…',
-  'Finding simple words…',
-  'Organizing key points…',
-  'Almost there…',
-];
 
 export default function StatusMessage({
   type = 'empty',
   message = '',
   onRetry = null,
 }) {
+  const { t } = useSettings();
+  const rotatingTexts = [
+    t('thinking'),
+    t('findingWords'),
+    t('organizingPoints'),
+    t('almostThere'),
+  ];
   const [textIndex, setTextIndex] = useState(0);
 
   // Rotate loading texts every 2 seconds unless user prefers reduced motion
@@ -38,10 +39,10 @@ export default function StatusMessage({
 
         <div className="space-y-1">
           <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-            {message || ROTATING_TEXTS[textIndex]}
+            {message || rotatingTexts[textIndex]}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Gemma is tailoring your response.
+            {t('tailoringResponse')}
           </p>
         </div>
 
@@ -65,9 +66,9 @@ export default function StatusMessage({
         <div className="flex items-start space-x-3">
           <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-600 dark:text-red-400 mt-0.5" />
           <div className="flex-1 space-y-1">
-            <h4 className="text-sm font-bold">Something went wrong</h4>
+            <h4 className="text-sm font-bold">{t('somethingWrong')}</h4>
             <p className="text-xs leading-relaxed text-red-800 dark:text-red-300">
-              {message || 'The study engine encountered a problem. Please try again.'}
+              {message || t('errorGeneric')}
             </p>
           </div>
         </div>
@@ -79,7 +80,7 @@ export default function StatusMessage({
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-red-600 hover:bg-red-700 text-white shadow-sm transition"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              Try again
+              {t('tryAgain')}
             </button>
           </div>
         )}
@@ -95,10 +96,10 @@ export default function StatusMessage({
       </div>
       <div className="max-w-sm space-y-1">
         <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-          Ready to learn
+          {t('readyToLearn')}
         </h4>
         <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-          {message || 'Fill out the form above to generate your study material.'}
+          {message || t('fillForm')}
         </p>
       </div>
     </div>

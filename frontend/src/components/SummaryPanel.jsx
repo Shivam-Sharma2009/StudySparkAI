@@ -6,6 +6,7 @@ import StatusMessage from './StatusMessage';
 import { FileText, Copy, Check, ArrowRight, Sparkles } from 'lucide-react';
 
 export function SummaryResult({ result, onQuizMe, language = 'en' }) {
+  const { t } = useSettings();
   const [copied, setCopied] = useState(false);
   const headingRef = useRef(null);
 
@@ -38,7 +39,7 @@ export function SummaryResult({ result, onQuizMe, language = 'en' }) {
       <div className="flex items-start justify-between gap-4 border-b border-gray-100 dark:border-gray-800 pb-4">
         <div>
           <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 block mb-1">
-            Summary
+            {t('summaryType')}
           </span>
           <h2
             id="summary-result-title"
@@ -46,7 +47,7 @@ export function SummaryResult({ result, onQuizMe, language = 'en' }) {
             tabIndex={-1}
             className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 outline-none"
           >
-            Notes Summary
+            {t('notesSummary')}
           </h2>
         </div>
 
@@ -58,12 +59,12 @@ export function SummaryResult({ result, onQuizMe, language = 'en' }) {
           {copied ? (
             <>
               <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span className="text-emerald-600 dark:text-emerald-400">Copied!</span>
+              <span className="text-emerald-600 dark:text-emerald-400">{t('copied')}</span>
             </>
           ) : (
             <>
               <Copy className="w-3.5 h-3.5" />
-              <span>Copy</span>
+              <span>{t('copy')}</span>
             </>
           )}
         </button>
@@ -78,7 +79,7 @@ export function SummaryResult({ result, onQuizMe, language = 'en' }) {
       {result.key_points && result.key_points.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-            Core Points
+            {t('corePoints')}
           </h3>
           <ul className="space-y-1.5 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
             {result.key_points.map((pt, idx) => (
@@ -95,7 +96,7 @@ export function SummaryResult({ result, onQuizMe, language = 'en' }) {
       {result.key_terms && result.key_terms.length > 0 && (
         <div className="space-y-2.5">
           <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-            Key Vocabulary
+            {t('keyVocabulary')}
           </h3>
           <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {result.key_terms.map((t, idx) => (
@@ -122,7 +123,7 @@ export function SummaryResult({ result, onQuizMe, language = 'en' }) {
             onClick={() => onQuizMe(result.summary)}
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
           >
-            <span>Generate quiz from this summary</span>
+            <span>{t('quizFromSummary')}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -132,7 +133,7 @@ export function SummaryResult({ result, onQuizMe, language = 'en' }) {
 }
 
 export default function SummaryPanel({ onQuizMe }) {
-  const { language } = useSettings();
+  const { language, t, formatError } = useSettings();
   const { addEntry } = useStudyHistory();
   const [notes, setNotes] = useState('');
   const [length, setLength] = useState('short'); // short | medium
@@ -168,7 +169,7 @@ export default function SummaryPanel({ onQuizMe }) {
         result: response.data,
       });
     } catch (err) {
-      setErrorMessage(err.message || 'Could not summarize notes. Please try again.');
+      setErrorMessage(formatError(err) || t('couldNotSummarize'));
       setStatus('error');
     }
   };
@@ -179,10 +180,10 @@ export default function SummaryPanel({ onQuizMe }) {
       <div>
         <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 flex items-center gap-2">
           <span>📝</span>
-          <span>Summarize Notes</span>
+          <span>{t('summary')}</span>
         </h2>
         <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Extract key points and essential vocabulary directly from your study material.
+          {t('summarizeDescription')}
         </p>
       </div>
 
@@ -196,14 +197,14 @@ export default function SummaryPanel({ onQuizMe }) {
             htmlFor="summary-notes-input"
             className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400"
           >
-            Study Notes or Article
+            {t('studyNotes')}
           </label>
           <textarea
             id="summary-notes-input"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={8}
-            placeholder="Paste your notes here (50 to 8000 characters)…"
+            placeholder={t('notesPlaceholder')}
             className={`w-full px-3.5 py-2.5 rounded-xl border bg-transparent text-sm focus:outline-none focus:ring-2 transition ${
               isTooLong
                 ? 'border-red-500 focus:ring-red-500'
@@ -214,7 +215,7 @@ export default function SummaryPanel({ onQuizMe }) {
 
           <div className="flex justify-between items-center text-[11px]">
             <span className={isTooShort ? 'text-amber-500 font-semibold' : 'text-gray-400'}>
-              {isTooShort ? 'Needs at least 50 characters' : isTooLong ? 'Exceeds 8000 character limit' : '50–8000 characters'}
+              {isTooShort ? t('needs50') : isTooLong ? t('over8000') : t('charRange')}
             </span>
             <span
               className={
@@ -231,7 +232,7 @@ export default function SummaryPanel({ onQuizMe }) {
 
           {isTooLong && (
             <p className="text-xs text-red-500">
-              Please shorten your notes to 8000 characters.
+              {t('shortenNotes')}
             </p>
           )}
         </div>
@@ -239,16 +240,16 @@ export default function SummaryPanel({ onQuizMe }) {
         {/* Summary Length Control */}
         <div className="space-y-1.5">
           <span className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400">
-            Summary Depth
+            {t('summaryDepth')}
           </span>
           <div
             className="grid grid-cols-2 gap-1 p-1 max-w-sm rounded-xl bg-[#F1F0EA] dark:bg-[#20242F] border border-[#E5E3DA] dark:border-[#2C3140]"
             role="radiogroup"
-            aria-label="Summary length"
+            aria-label={t('summaryDepth')}
           >
             {[
-              { id: 'short', label: 'Short (Quick Recap)', desc: '3-4 sentences' },
-              { id: 'medium', label: 'Medium (In-depth)', desc: '1-2 paragraphs' },
+              { id: 'short', label: t('shortRecap'), desc: '3-4 sentences' },
+              { id: 'medium', label: t('mediumDetailed'), desc: '1-2 paragraphs' },
             ].map((len) => (
               <button
                 type="button"
@@ -275,13 +276,13 @@ export default function SummaryPanel({ onQuizMe }) {
           className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
         >
           <Sparkles className="w-4 h-4" />
-          <span>{status === 'loading' ? 'Summarizing…' : 'Summarize'}</span>
+          <span>{status === 'loading' ? t('summarizing') : t('summarize')}</span>
         </button>
       </form>
 
       {/* Results / Status Area */}
       <div className="pt-2">
-        {status === 'loading' && <StatusMessage type="loading" message="Synthesizing notes…" />}
+        {status === 'loading' && <StatusMessage type="loading" message={t('synthesizing')} />}
         {status === 'error' && (
           <StatusMessage type="error" message={errorMessage} onRetry={handleSubmit} />
         )}
@@ -289,7 +290,7 @@ export default function SummaryPanel({ onQuizMe }) {
           <SummaryResult result={result} onQuizMe={onQuizMe} language={language} />
         )}
         {status === 'idle' && !result && (
-          <StatusMessage type="empty" message="Paste lecture notes or textbook excerpts above to distill them." />
+          <StatusMessage type="empty" message={t('pasteNotes')} />
         )}
       </div>
     </div>

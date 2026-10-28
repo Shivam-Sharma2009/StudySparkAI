@@ -63,7 +63,7 @@ Spec references: API → `05`, prompts → `06`, design → `03`, UI → `07`, t
 
 ## Phase 4 — Enhancements (≈ 3–4 h)
 
-- [ ] 4.1 **(E1, Should)** Language toggle wired into every request; Hindi text renders in Noto Sans Devanagari with correct line height; `lang` attribute on results.
+- [x] 4.1 **(E1, Should)** Language toggle wired into every request; Hindi text renders in Noto Sans Devanagari with correct line height; `lang` attribute on results.
 - [ ] 4.2 **(E2, Should)** `useStudyHistory` hook; auto-save on success; `StudyHistory` page with tabs, open read-only result (reuse `*Result` components), delete, clear all with confirm.
 - [ ] 4.3 **(E3, Should)** Dark mode polish across all components; verify contrast.
 - [ ] 4.4 **(E4, Could)** Quiz scores stored; History stats strip (taken, best, average).
@@ -126,3 +126,4 @@ Record deviations and decisions here as you go so the specs stay truthful:
 | 2026-10-28 | Phase 1 | Completed backend core: Pydantic schemas, prompt builders, async GemmaService with repair retry, all 5 endpoints with post-processing, and 42 unit/api tests. | No (Followed spec strictly) |
 | 2026-10-28 | Phase 2 | Completed frontend shell: responsive Sidebar, Header, BottomTabBar, SettingsContext, feature panels with interactive state, mock mode services, and verified build. | No (Followed spec strictly) |
 | 2026-10-28 | Phase 3 | All four feature panels (Explain, Summary, Quiz, Study Plan) were already built with full forms, validation, status machines, result cards, Copy, retry, and api.js integration during Phase 2. Switched frontend from mock mode to real backend mode. Frontend builds cleanly (1578 modules, 0 errors). Backend tests pass (42/42). | No (Followed spec strictly) |
+| 2026-10-28 | Phase 4.1 | Centralized English/Hindi UI text, persisted and validated language settings, wired the selected language through all four API payloads, and set result language attributes. Verified both UI languages in the browser and the production build. Live Gemma Hindi generation was not exercised. | No |

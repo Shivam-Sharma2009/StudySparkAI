@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSettings } from '../context/SettingsContext';
 import { useStudyHistory } from '../hooks/useStudyHistory';
 import { ExplainResult } from '../components/ExplainPanel';
 import { SummaryResult } from '../components/SummaryPanel';
@@ -19,37 +20,38 @@ import {
 } from 'lucide-react';
 
 const TABS = [
-  { id: 'all', label: 'All' },
-  { id: 'explain', label: 'Explain' },
-  { id: 'summary', label: 'Summary' },
-  { id: 'quiz', label: 'Quiz' },
-  { id: 'plan', label: 'Plan' },
+  { id: 'all', labelKey: 'all' },
+  { id: 'explain', labelKey: 'explainTab' },
+  { id: 'summary', labelKey: 'summaryTab' },
+  { id: 'quiz', labelKey: 'quizTab' },
+  { id: 'plan', labelKey: 'planTab' },
 ];
 
 const TYPE_CONFIG = {
   explain: {
     icon: BookOpen,
-    label: 'Explanation',
+    labelKey: 'explanationType',
     color: 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800',
   },
   summary: {
     icon: FileText,
-    label: 'Summary',
+    labelKey: 'summaryType',
     color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800',
   },
   quiz: {
     icon: CheckCircle2,
-    label: 'Quiz',
+    labelKey: 'quizTab',
     color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800',
   },
   plan: {
     icon: Calendar,
-    label: 'Study Plan',
+    labelKey: 'planType',
     color: 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/60 border-purple-200 dark:border-purple-800',
   },
 };
 
 export default function StudyHistory({ onNavigateToTool }) {
+  const { t } = useSettings();
   const { history, removeEntry, clearHistory, stats, seedDemoData } = useStudyHistory();
   const [activeTab, setActiveTab] = useState('all');
   const [viewingItem, setViewingItem] = useState(null);
@@ -81,10 +83,13 @@ export default function StudyHistory({ onNavigateToTool }) {
         <div>
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 flex items-center gap-2">
             <span>🕘</span>
-            <span>Study History</span>
+            <span>{t('history')}</span>
           </h2>
           <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Review your previously generated explanations, summaries, quiz scores, and roadmaps.
+            {t('reviewHistory')}
+          </p>
+          <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
+            {t('localDataWarning')}
           </p>
         </div>
 
@@ -95,7 +100,7 @@ export default function StudyHistory({ onNavigateToTool }) {
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800/80 bg-indigo-50/50 dark:bg-indigo-950/40 text-xs font-semibold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Load Demo Data</span>
+              <span>{t('loadDemo')}</span>
             </button>
           )}
 
@@ -105,14 +110,14 @@ export default function StudyHistory({ onNavigateToTool }) {
               className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-semibold px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/60 transition flex items-center gap-1"
             >
               <Trash2 className="w-3.5 h-3.5" />
-              <span>Clear all</span>
+              <span>{t('clearAll')}</span>
             </button>
           )}
 
           {showClearConfirm && (
             <div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900/80 px-3 py-1.5 rounded-xl">
               <span className="text-xs font-semibold text-red-700 dark:text-red-300">
-                Delete all {history.length} items?
+                {t('deleteItems', { count: history.length })}
               </span>
               <button
                 onClick={() => {
@@ -122,13 +127,13 @@ export default function StudyHistory({ onNavigateToTool }) {
                 }}
                 className="text-xs bg-red-600 hover:bg-red-700 text-white font-bold px-2 py-0.5 rounded transition"
               >
-                Yes, delete
+                {t('deleteYes')}
               </button>
               <button
                 onClick={() => setShowClearConfirm(false)}
                 className="text-xs text-gray-600 dark:text-gray-400 hover:underline"
               >
-                Cancel
+                {t('cancel')}
               </button>
             </div>
           )}
@@ -139,7 +144,7 @@ export default function StudyHistory({ onNavigateToTool }) {
       <div className="grid grid-cols-4 gap-2 sm:gap-4 p-4 rounded-2xl bg-white dark:bg-[#181B24] border border-[#E5E3DA] dark:border-[#2C3140] shadow-sm text-center">
         <div>
           <span className="text-[10px] uppercase font-bold text-gray-400 block tracking-wider">
-            Quizzes Taken
+            {t('quizzesTaken')}
           </span>
           <span className="text-base sm:text-xl font-bold text-gray-900 dark:text-gray-100">
             {stats.quizzesTaken}
@@ -147,7 +152,7 @@ export default function StudyHistory({ onNavigateToTool }) {
         </div>
         <div>
           <span className="text-[10px] uppercase font-bold text-gray-400 block tracking-wider">
-            Best Score
+            {t('bestScore')}
           </span>
           <span className="text-base sm:text-xl font-bold text-emerald-600 dark:text-emerald-400">
             {stats.bestScore}
@@ -155,7 +160,7 @@ export default function StudyHistory({ onNavigateToTool }) {
         </div>
         <div>
           <span className="text-[10px] uppercase font-bold text-gray-400 block tracking-wider">
-            Average Score
+            {t('averageScore')}
           </span>
           <span className="text-base sm:text-xl font-bold text-indigo-600 dark:text-indigo-400">
             {stats.avgScore}
@@ -163,7 +168,7 @@ export default function StudyHistory({ onNavigateToTool }) {
         </div>
         <div>
           <span className="text-[10px] uppercase font-bold text-gray-400 block tracking-wider">
-            Roadmaps
+            {t('roadmaps')}
           </span>
           <span className="text-base sm:text-xl font-bold text-purple-600 dark:text-purple-400">
             {stats.savedPlans}
@@ -177,7 +182,7 @@ export default function StudyHistory({ onNavigateToTool }) {
           <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                Viewing Saved {TYPE_CONFIG[viewingItem.type]?.label || 'Result'}
+                {t('viewingSaved', { type: t(TYPE_CONFIG[viewingItem.type]?.labelKey || 'explanationType') })}
               </span>
               <span className="text-xs text-gray-400">
                 • {formatDate(viewingItem.createdAt)}
@@ -191,7 +196,7 @@ export default function StudyHistory({ onNavigateToTool }) {
             <button
               onClick={() => setViewingItem(null)}
               className="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition"
-              aria-label="Close view"
+              aria-label={t('closeView')}
             >
               <X className="w-5 h-5" />
             </button>
@@ -202,19 +207,25 @@ export default function StudyHistory({ onNavigateToTool }) {
               <ExplainResult
                 result={viewingItem.result}
                 onQuizMe={(topic) => onNavigateToTool && onNavigateToTool('quiz', topic)}
+                language={viewingItem.language}
               />
             )}
             {viewingItem.type === 'summary' && viewingItem.result && (
               <SummaryResult
                 result={viewingItem.result}
                 onQuizMe={(content) => onNavigateToTool && onNavigateToTool('quiz', content)}
+                language={viewingItem.language}
               />
             )}
             {viewingItem.type === 'quiz' && viewingItem.result && (
-              <QuizResult quiz={viewingItem.result} onNewQuiz={() => setViewingItem(null)} />
+              <QuizResult
+                quiz={viewingItem.result}
+                onNewQuiz={() => setViewingItem(null)}
+                language={viewingItem.language}
+              />
             )}
             {viewingItem.type === 'plan' && viewingItem.result && (
-              <StudyPlanResult plan={viewingItem.result} planId={viewingItem.id} />
+              <StudyPlanResult plan={viewingItem.result} planId={viewingItem.id} language={viewingItem.language} />
             )}
           </div>
         </div>
@@ -237,7 +248,7 @@ export default function StudyHistory({ onNavigateToTool }) {
                   : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
               }`}
             >
-              <span>{tab.label}</span>
+              <span>{t(tab.labelKey)}</span>
               <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-bold">
                 {count}
               </span>
@@ -273,7 +284,7 @@ export default function StudyHistory({ onNavigateToTool }) {
                   <div className="space-y-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                        {config.label}
+                        {t(config.labelKey)}
                       </span>
                       <span className="text-gray-300 dark:text-gray-700">•</span>
                       <span className="text-xs text-gray-400 dark:text-gray-500">
@@ -290,7 +301,7 @@ export default function StudyHistory({ onNavigateToTool }) {
                       className="text-sm font-semibold text-gray-900 dark:text-gray-100 line-clamp-2"
                       lang={item.language || 'en'}
                     >
-                      {item.result?.title || item.inputPreview || 'Saved study session'}
+                      {item.result?.title || item.inputPreview || t('savedSession')}
                     </p>
                   </div>
                 </div>
@@ -301,7 +312,7 @@ export default function StudyHistory({ onNavigateToTool }) {
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 text-xs font-semibold text-indigo-700 dark:text-indigo-300 transition"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
-                    <span>{isViewing ? 'Hide' : 'Open'}</span>
+                    <span>{isViewing ? t('hide') : t('open')}</span>
                   </button>
 
                   <button
@@ -310,8 +321,8 @@ export default function StudyHistory({ onNavigateToTool }) {
                       if (viewingItem?.id === item.id) setViewingItem(null);
                     }}
                     className="p-1.5 rounded-xl text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition"
-                    title="Delete item"
-                    aria-label="Delete item"
+                    title={t('deleteItem')}
+                    aria-label={t('deleteItem')}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -328,10 +339,10 @@ export default function StudyHistory({ onNavigateToTool }) {
           </div>
           <div className="space-y-1">
             <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200">
-              Nothing saved yet in {activeTab === 'all' ? 'history' : activeTab}
+              {t('nothingSaved', { type: activeTab === 'all' ? t('allHistory') : t(TABS.find((tab) => tab.id === activeTab)?.labelKey || 'history') })}
             </h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-              Your generated study explanations, notes summaries, quiz scores, and roadmaps will appear here automatically.
+              {t('historyEmptyDescription')}
             </p>
           </div>
           <div className="flex items-center justify-center gap-3 pt-2">
@@ -340,7 +351,7 @@ export default function StudyHistory({ onNavigateToTool }) {
                 onClick={() => onNavigateToTool('explain')}
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition"
               >
-                <span>Start learning now</span>
+                <span>{t('startLearning')}</span>
               </button>
             )}
             <button
@@ -348,7 +359,7 @@ export default function StudyHistory({ onNavigateToTool }) {
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-semibold transition"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Load sample data</span>
+              <span>{t('loadSampleData')}</span>
             </button>
           </div>
         </div>

@@ -9,7 +9,7 @@ export default function Header({
   loadingHealth,
   onRefreshHealth,
 }) {
-  const { theme, language, toggleTheme, toggleLanguage } = useSettings();
+  const { theme, language, toggleTheme, toggleLanguage, t } = useSettings();
   const [showWakeupBanner, setShowWakeupBanner] = useState(false);
 
   // 3-second timer for wake-up banner per 07-UI-UX-Spec §5.7 & 04-Flows §7
@@ -39,7 +39,7 @@ export default function Header({
       {/* Wake-up banner */}
       {showWakeupBanner && (
         <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-1.5 text-xs text-amber-700 dark:text-amber-300 text-center font-medium animate-pulse">
-          ⚡ Waking up the study engine… this can take up to a minute the first time.
+          ⚡ {t('wakeup')}
         </div>
       )}
 
@@ -49,7 +49,7 @@ export default function Header({
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="lg:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-            aria-label="Toggle navigation menu"
+            aria-label={t('toggleNavigation')}
           >
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -63,7 +63,7 @@ export default function Header({
                 StudySpark AI
               </span>
               <p className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
-                Learn Smarter, Not Harder. 📚
+              {t('assistantTagline')} 📚
               </p>
             </div>
           </div>
@@ -78,10 +78,10 @@ export default function Header({
               loadingHealth
                 ? 'Checking backend status...'
                 : isConfigured
-                ? `Engine Ready (${health?.model || 'Gemma'})`
+                ? `${t('engineReady')} (${health?.model || 'Gemma'})`
                 : isHealthy
-                ? 'Engine Ready (API Key Pending)'
-                : 'Engine Offline (Click to retry)'
+                ? t('aiKeyMissing')
+                : `${t('engineOffline')} (Click to retry)`
             }
           >
             <span
@@ -97,19 +97,19 @@ export default function Header({
             />
             <span className="text-gray-600 dark:text-gray-300 hidden md:inline text-[11px]">
               {loadingHealth
-                ? 'Connecting…'
+                ? t('checkingStatus')
                 : isConfigured
-                ? 'Engine Ready'
+                ? t('engineReady')
                 : isHealthy
-                ? 'AI Key Missing'
-                : 'Offline'}
+                ? t('aiKeyMissing')
+                : t('engineOffline')}
             </span>
             {!isHealthy && onRefreshHealth && (
               <button
                 onClick={onRefreshHealth}
                 className="text-[10px] text-indigo-600 dark:text-indigo-400 underline ml-0.5"
               >
-                Retry
+                {t('retry')}
               </button>
             )}
           </div>
@@ -118,8 +118,8 @@ export default function Header({
           <button
             onClick={toggleLanguage}
             className="px-2.5 py-1 text-xs font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#181B24] hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-700 dark:text-gray-200"
-            title="Toggle output language between English and Hindi"
-            aria-label={`Current language ${language}. Click to toggle.`}
+            title={t('toggleLanguage')}
+            aria-label={t('languageLabel', { lang: language === 'en' ? 'English' : 'हिंदी' })}
           >
             {language === 'en' ? 'EN | हिं' : 'हिं | EN'}
           </button>
@@ -128,8 +128,8 @@ export default function Header({
           <button
             onClick={toggleTheme}
             className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#181B24] hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-600 dark:text-gray-300"
-            aria-label="Toggle light or dark theme"
-            title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            aria-label={t('themeLabel')}
+            title={isDark ? t('switchToLight') : t('switchToDark')}
           >
             {isDark ? (
               <Sun className="w-4 h-4 text-amber-400" />

@@ -8,6 +8,7 @@ import { Sparkles, Copy, Check, ArrowRight } from 'lucide-react';
 const EXAMPLE_CHIPS = ["Photosynthesis", "Newton's third law", "Ohm's law"];
 
 export function ExplainResult({ result, onQuizMe, language = 'en' }) {
+  const { t } = useSettings();
   const [copied, setCopied] = useState(false);
   const headingRef = useRef(null);
 
@@ -38,7 +39,7 @@ export function ExplainResult({ result, onQuizMe, language = 'en' }) {
       <div className="flex items-start justify-between gap-4 border-b border-gray-100 dark:border-gray-800 pb-4">
         <div>
           <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 block mb-1">
-            Explanation
+            {t('explanation')}
           </span>
           <h2
             id="explain-result-title"
@@ -58,12 +59,12 @@ export function ExplainResult({ result, onQuizMe, language = 'en' }) {
           {copied ? (
             <>
               <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span className="text-emerald-600 dark:text-emerald-400">Copied!</span>
+              <span className="text-emerald-600 dark:text-emerald-400">{t('copied')}</span>
             </>
           ) : (
             <>
               <Copy className="w-3.5 h-3.5" />
-              <span>Copy</span>
+              <span>{t('copy')}</span>
             </>
           )}
         </button>
@@ -80,7 +81,7 @@ export function ExplainResult({ result, onQuizMe, language = 'en' }) {
       {result.example && (
         <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-950 dark:text-amber-200 space-y-1">
           <div className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
-            <span>💡 Real-life Example</span>
+            <span>💡 {t('realLifeExample')}</span>
           </div>
           <p className="text-xs sm:text-sm leading-relaxed">{result.example}</p>
         </div>
@@ -90,7 +91,7 @@ export function ExplainResult({ result, onQuizMe, language = 'en' }) {
       {result.key_points && result.key_points.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-            Key Takeaways
+            {t('keyTakeaways')}
           </h3>
           <ul className="space-y-1.5 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
             {result.key_points.map((pt, idx) => (
@@ -107,7 +108,7 @@ export function ExplainResult({ result, onQuizMe, language = 'en' }) {
       {result.quick_recap && (
         <div className="p-3 rounded-xl bg-[#F1F0EA] dark:bg-[#20242F] border border-[#E5E3DA] dark:border-[#2C3140] flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
           <span className="font-bold text-indigo-600 dark:text-indigo-400 flex-shrink-0">
-            In one line:
+            {t('oneLine')}
           </span>
           <span className="italic">{result.quick_recap}</span>
         </div>
@@ -120,7 +121,7 @@ export function ExplainResult({ result, onQuizMe, language = 'en' }) {
             onClick={() => onQuizMe(result.title)}
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
           >
-            <span>Quiz me on this topic</span>
+            <span>{t('quizOnTopic')}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -130,7 +131,7 @@ export function ExplainResult({ result, onQuizMe, language = 'en' }) {
 }
 
 export default function ExplainPanel({ onQuizMe, initialTopic = '' }) {
-  const { language } = useSettings();
+  const { language, t, formatError } = useSettings();
   const { addEntry } = useStudyHistory();
   const [topic, setTopic] = useState(initialTopic);
   const [level, setLevel] = useState('beginner'); // beginner | intermediate | advanced
@@ -162,7 +163,7 @@ export default function ExplainPanel({ onQuizMe, initialTopic = '' }) {
         result: response.data,
       });
     } catch (err) {
-      setErrorMessage(err.message || 'Could not explain this topic. Please try again.');
+      setErrorMessage(formatError(err) || t('couldNotExplain'));
       setStatus('error');
     }
   };
@@ -177,10 +178,10 @@ export default function ExplainPanel({ onQuizMe, initialTopic = '' }) {
       <div>
         <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 flex items-center gap-2">
           <span>💡</span>
-          <span>Explain a Topic</span>
+          <span>{t('explain')}</span>
         </h2>
         <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Get crystal-clear explanations with everyday analogies, worked examples, and key points.
+          {t('explainDescription')}
         </p>
       </div>
 
@@ -194,7 +195,7 @@ export default function ExplainPanel({ onQuizMe, initialTopic = '' }) {
             htmlFor="explain-topic-input"
             className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400"
           >
-            Topic or Concept
+            {t('topicOrConcept')}
           </label>
           <textarea
             id="explain-topic-input"
@@ -202,12 +203,12 @@ export default function ExplainPanel({ onQuizMe, initialTopic = '' }) {
             onChange={(e) => setTopic(e.target.value)}
             rows={2}
             maxLength={500}
-            placeholder="e.g. Photosynthesis, Newton's third law, Bernoulli's principle"
+            placeholder={t('topicPlaceholder')}
             className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:focus:ring-indigo-400 transition"
             required
           />
           <div className="flex justify-between items-center text-[11px] text-gray-400">
-            <span>Minimum 3 characters</span>
+            <span>{t('minimum3')}</span>
             <span className={topic.length > 450 ? 'text-amber-500 font-semibold' : ''}>
               {topic.length} / 500
             </span>
@@ -217,17 +218,17 @@ export default function ExplainPanel({ onQuizMe, initialTopic = '' }) {
         {/* Level Segmented Control */}
         <div className="space-y-1.5">
           <span className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400">
-            Student Level
+            {t('studentLevel')}
           </span>
           <div
             className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-[#F1F0EA] dark:bg-[#20242F] border border-[#E5E3DA] dark:border-[#2C3140]"
             role="radiogroup"
-            aria-label="Student understanding level"
+            aria-label={t('studentLevel')}
           >
             {[
-              { id: 'beginner', label: 'Beginner', desc: 'Simple analogies' },
-              { id: 'intermediate', label: 'Intermediate', desc: 'School basics' },
-              { id: 'advanced', label: 'Advanced', desc: 'Deep terminology' },
+              { id: 'beginner', label: t('beginner'), desc: 'Simple analogies' },
+              { id: 'intermediate', label: t('intermediate'), desc: 'School basics' },
+              { id: 'advanced', label: t('advanced'), desc: 'Deep terminology' },
             ].map((lvl) => (
               <button
                 type="button"
@@ -254,13 +255,13 @@ export default function ExplainPanel({ onQuizMe, initialTopic = '' }) {
           className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
         >
           <Sparkles className="w-4 h-4" />
-          <span>{status === 'loading' ? 'Explaining…' : 'Explain it'}</span>
+          <span>{status === 'loading' ? t('explaining') : t('explainIt')}</span>
         </button>
 
         {/* Example chips if idle & empty */}
         {status === 'idle' && !result && (
           <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex flex-wrap items-center gap-2">
-            <span className="text-xs text-gray-400">Try an example:</span>
+            <span className="text-xs text-gray-400">{t('tryExample')}</span>
             {EXAMPLE_CHIPS.map((chip) => (
               <button
                 key={chip}
@@ -277,7 +278,7 @@ export default function ExplainPanel({ onQuizMe, initialTopic = '' }) {
 
       {/* Results / Status Area */}
       <div className="pt-2">
-        {status === 'loading' && <StatusMessage type="loading" message="Crafting explanation…" />}
+        {status === 'loading' && <StatusMessage type="loading" message={t('craftingExplanation')} />}
         {status === 'error' && (
           <StatusMessage type="error" message={errorMessage} onRetry={handleSubmit} />
         )}
@@ -285,7 +286,7 @@ export default function ExplainPanel({ onQuizMe, initialTopic = '' }) {
           <ExplainResult result={result} onQuizMe={onQuizMe} language={language} />
         )}
         {status === 'idle' && !result && (
-          <StatusMessage type="empty" message="Enter a topic above or tap an example to begin." />
+          <StatusMessage type="empty" message={t('enterTopic')} />
         )}
       </div>
     </div>
