@@ -450,3 +450,42 @@ def test_production_settings_require_explicit_non_local_cors_origins():
     )
     assert settings.is_production
     assert settings.cors_origins == ["https://studyspark.example"]
+@pytest.mark.asyncio
+async def test_rate_limiting_21st_request():
+    from main import limiter
+    limiter.reset()
+
+    mock_service = MagicMock()
+    mock_service.generate_json = AsyncMock(
+        return_value=(
+            ExplainOutput(
+                title="Gravity",
+                explanation="Things fall.",
+                example="Dropping an apple.",
+                key_points=["Gravity pulls masses together."],
+                quick_recap="Mass attracts mass.",
+            ),
+            ResponseMeta(
+                model="gemma-4-26b-a4b-it",
+                language="en",
+                latency_ms=10,
+                attempts=1,
+            ),
+        )
+    )
+    app.dependency_overrides[get_gemma_service] = lambda: mock_service
+
+    transport = ASGITransport(app=app, client=("192.168.1.102", 50000))
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        for i in range(20):
+            res = await client.post("/api/explain", json={"topic": "Gravity"})
+            assert res.status_code == 200, f"Request {i+1} failed with {res.status_code}"
+
+        res_21 = await client.post("/api/explain", json={"topic": "Gravity"})
+        assert res_21.status_code == 429
+        body = res_21.json()
+        assert body["ok"] is False
+        assert body["error"]["code"] == "RATE_LIMITED"
+        assert body["error"]["retryable"] is True
+
+    limiter.reset()
