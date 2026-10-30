@@ -110,7 +110,7 @@ Spec references: API → `05`, prompts → `06`, design → `03`, UI → `07`, t
 - Feature review: the four panels still use their respective `api.js` endpoints; successful results alone are saved to local history, quiz scoring remains connected, and plan progress remains keyed by plan. No feature source changes were needed.
 - The dedicated `RATE_LIMIT=20/minute` 21st-request `429` test now passes. No live model calls were made during this verification; real inference remains **BLOCKED** based on the earlier provider failures.
 - Dashboard tool cards are now keyboard-operable semantic buttons, and quiz completion includes the final answer when persisting the score.
-- Gate 5 remains **not passed**: remaining accessibility checks (full-app contrast, screen-reader announcements, and 200% zoom) are still open. Deployment is **NOT RUN** and remains deferred to Phase 8.
+- Gate 5 remains **not passed**: remaining accessibility checks (full-app contrast, screen-reader announcements, and 200% zoom) are still open. Deployment is **NOT RUN** and remains deferred to Phase 9.
 
 ---
 
@@ -143,7 +143,43 @@ Spec references: API → `05`, prompts → `06`, design → `03`, UI → `07`, t
 
 ---
 
-## Phase 7 — Stretch (only if time remains; not part of the MVP)
+## Phase 7 — Adaptive AI Quiz (post-Phase-6 enhancement)
+
+**Scope decision:** keep the existing fixed five-question quiz unchanged and add Adaptive Quiz as a separate opt-in flow. The adaptive flow is sequential: the client submits the completed answer and answer history, the backend validates it, and Gemma returns the next question or a targeted practice question. No client-side difficulty decisions or unvalidated model output are trusted.
+
+### Planning and contract
+
+- [ ] 7.1 Update `05-API-Spec.md`, `06-Prompt-Spec.md`, and `09-Testing-Deployment.md` with the adaptive quiz contract, limits, fallback behavior, and golden cases before implementation.
+- [ ] 7.2 Define the adaptive session model: maximum 10 questions, difficulty levels `easy | medium | hard`, weak-concept tracking, stop conditions, and a deterministic session identifier.
+- [ ] 7.3 Define privacy and persistence rules: keep only the adaptive session summary, score, difficulty history, and weak concepts in `localStorage`; do not persist raw notes or full answer text.
+
+### Backend
+
+- [ ] 7.4 Add request/output schemas for starting and advancing an adaptive quiz, including validated answer history, selected option, correct answer, concept tags, difficulty, and `next_action` (`continue | practice | complete`).
+- [ ] 7.5 Add `POST /api/adaptive-quiz/start` and `POST /api/adaptive-quiz/answer` using the existing envelope, request limits, rate limiting, request IDs, and human-readable errors.
+- [ ] 7.6 Add adaptive prompt builders that require one question at a time, preserve the original topic/material boundary, increase difficulty after correct answers, decrease or hold difficulty after incorrect answers, and target weak concepts with additional practice questions.
+- [ ] 7.7 Reuse the existing Gemma parse → Pydantic validation → post-processing → one repair retry pipeline; reject duplicate options, invalid indices, unsupported difficulty jumps, prompt leakage, and questions unrelated to the supplied content.
+- [ ] 7.8 Add deterministic post-processing for question IDs, difficulty transitions, score updates, weak-concept aggregation, the 10-question cap, and graceful completion when the provider fails.
+
+### Frontend
+
+- [ ] 7.9 Add an Adaptive Quiz entry point without changing the existing Quiz flow; include a clear “adaptive” mode label and an explanation of how difficulty changes.
+- [ ] 7.10 Implement the adaptive state machine: start, answer, feedback, targeted practice, completion, retry, and provider-error states; prevent duplicate answer submissions.
+- [ ] 7.11 Show current difficulty, progress, score, weak concepts, and why a practice question was generated; keep keyboard navigation, focus management, reduced-motion behavior, Hindi rendering, and screen-reader announcements consistent with the existing quiz.
+- [ ] 7.12 Save and reopen an adaptive session summary through Study History; support retake/new session and safe recovery from malformed or unavailable `localStorage`.
+
+### Verification gate
+
+- [ ] 7.13 Add backend tests for difficulty transitions, incorrect-answer practice targeting, concept aggregation, answer-history validation, caps, retries, provider errors, rate limits, and envelope consistency.
+- [ ] 7.14 Add frontend tests for the adaptive state machine, duplicate-submit guard, score persistence including the final answer, history reopen, malformed storage, and Hindi/keyboard states.
+- [ ] 7.15 Run the adaptive mock-browser flow at 360/768/1280 CSS pixels and verify no console errors, no horizontal overflow, accessible focus, and correct local persistence.
+- [ ] 7.16 Run one manual English and Hindi live adaptive session only after provider inference is healthy; record latency, output validity, difficulty changes, and targeted practice behavior in the task log.
+
+**Phase 7 gate:** fixed quizzes remain unchanged; adaptive sessions pass backend/frontend tests and mock-browser checks; live provider behavior is either verified in both languages or explicitly recorded as blocked.
+
+---
+
+## Phase 8 — Stretch (only if time remains; not part of the MVP)
 
 - [ ] 7.1 Streaming explanations (plain-text streaming for Explain only).
 - [ ] 7.2 PDF/image notes upload (Gemma 4 supports image input via the Gemini API; verify limits first).
@@ -153,13 +189,13 @@ Spec references: API → `05`, prompts → `06`, design → `03`, UI → `07`, t
 
 ---
 
-## Phase 8 — Final deployment and production verification (last phase; only after approval)
+## Phase 9 — Final deployment and production verification (last phase; only after approval)
 
-- [ ] 8.1 Confirm deployment target, publication authorization, production secrets, and hosting costs with the user. Never request or commit secrets in the repository.
-- [ ] 8.2 Deploy the backend using `09 §6`; configure `APP_ENV=production`, backend-only `GEMINI_API_KEY`, and an explicit production `ALLOWED_ORIGINS`; verify `/api/health`.
-- [ ] 8.3 Deploy the frontend using `VITE_API_BASE_URL`, `VITE_USE_MOCKS=false`, and the existing SPA rewrite; verify production requests never silently use mocks.
-- [ ] 8.4 Restrict CORS to the exact deployed frontend origin and verify the browser's health/API calls.
-- [ ] 8.5 After real provider inference is available, smoke-test all four features in English and Hindi on a phone and laptop; check responsive layout, errors, and browser console.
+- [ ] 9.1 Confirm deployment target, publication authorization, production secrets, and hosting costs with the user. Never request or commit secrets in the repository.
+- [ ] 9.2 Deploy the backend using `09 §6`; configure `APP_ENV=production`, backend-only `GEMINI_API_KEY`, and an explicit production `ALLOWED_ORIGINS`; verify `/api/health`.
+- [ ] 9.3 Deploy the frontend using `VITE_API_BASE_URL`, `VITE_USE_MOCKS=false`, and the existing SPA rewrite; verify production requests never silently use mocks.
+- [ ] 9.4 Restrict CORS to the exact deployed frontend origin and verify the browser's health/API calls.
+- [ ] 9.5 After real provider inference is available, smoke-test all five feature flows in English and Hindi on a phone and laptop; check responsive layout, errors, and browser console.
 
 **Final deployment gate:** only declare deployment complete when the approved deployed URL passes health, CORS, all eight live feature/language smoke tests, and phone/laptop checks. If provider inference or deployment approval is unavailable, report the gate as blocked/not run.
 
@@ -191,3 +227,4 @@ Record deviations and decisions here as you go so the specs stay truthful:
 | 2026-10-29 | Phase 5 (partial) | Hardened backend and frontend API handling, upgraded vulnerable frontend dependencies, audited Python packages, and updated deployment guidance. Backend tests 46/46, frontend tests 6/6, production build passed, npm audit 0 findings, pip-audit 0 findings after updating ignored virtualenv pip. Mock-browser acceptance passed for the listed flows. Four live endpoint attempts failed with safe provider/model error envelopes; real inference and deployment remain blocked/not run. | Yes |
 | 2026-10-29 | Phase 5 accessibility follow-up | Added reduced-motion handling for loading status, arrow-key/roving-tabindex behavior to the Explain, Summary, and Quiz radio groups, and 44 × 44 px targets to the header, segmented controls, and compact result actions. Mock-browser checks verified arrow-key selection, reduced-motion animation suppression, and visible mobile button sizes at 360 CSS pixels; the complete accessibility checklist remains open. | Yes |
 | 2026-10-30 | Phase 5 verification follow-up | Confirmed the dedicated 21st-request rate-limit test, updated the checklist for the current 47 backend and 12 frontend tests, converted dashboard tool cards to keyboard-operable buttons, and fixed final-answer omission in quiz score persistence. Full contrast, screen-reader, 200% zoom, live-provider, and deployment checks remain blocked or manual. | Yes |
+| 2026-10-30 | Adaptive Quiz planning | Added a post-Phase-6 Phase 7 for an opt-in sequential adaptive quiz, with separate API contracts, validated difficulty/weak-concept transitions, local summary persistence, accessibility requirements, mock/live verification, and explicit limits. Renumbered stretch and deployment to Phases 8 and 9. | Yes |
