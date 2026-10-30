@@ -162,11 +162,11 @@ Spec references: API → `05`, prompts → `06`, design → `03`, UI → `07`, t
 
 ### Backend
 
-- [ ] 7.4 Add request/output schemas for starting and advancing an adaptive quiz, including validated answer history, selected option, correct answer, concept tags, difficulty, and `next_action` (`continue | practice | complete`).
-- [ ] 7.5 Add `POST /api/adaptive-quiz/start` and `POST /api/adaptive-quiz/answer` using the existing envelope, request limits, rate limiting, request IDs, and human-readable errors.
-- [ ] 7.6 Add adaptive prompt builders that require one question at a time, preserve the original topic/material boundary, increase difficulty after correct answers, decrease or hold difficulty after incorrect answers, and target weak concepts with additional practice questions.
-- [ ] 7.7 Reuse the existing Gemma parse → Pydantic validation → post-processing → one repair retry pipeline; reject duplicate options, invalid indices, unsupported difficulty jumps, prompt leakage, and questions unrelated to the supplied content.
-- [ ] 7.8 Add deterministic post-processing for question IDs, difficulty transitions, score updates, weak-concept aggregation, the 10-question cap, and graceful completion when the provider fails.
+- [x] 7.4 Add request/output schemas for starting and advancing an adaptive quiz, including validated answer history, selected option, correct answer, concept tags, difficulty, and `next_action` (`continue | practice | complete`).
+- [x] 7.5 Add `POST /api/adaptive-quiz/start` and `POST /api/adaptive-quiz/answer` using the existing envelope, request limits, rate limiting, request IDs, and human-readable errors.
+- [x] 7.6 Add adaptive prompt builders that require one question at a time, preserve the original topic/material boundary, increase difficulty after correct answers, decrease or hold difficulty after incorrect answers, and target weak concepts with additional practice questions.
+- [x] 7.7 Reuse the existing Gemma parse → Pydantic validation → post-processing → one repair retry pipeline; reject duplicate options, invalid indices, unsupported difficulty jumps, prompt leakage, and questions unrelated to the supplied content.
+- [x] 7.8 Add deterministic post-processing for question IDs, difficulty transitions, score updates, weak-concept aggregation, the 10-question cap, and graceful completion when the provider fails.
 
 ### Frontend
 
@@ -223,6 +223,7 @@ Record deviations and decisions here as you go so the specs stay truthful:
 | Date | Task | Change / decision | Spec updated? |
 |---|---|---|---|
 | 2026-10-30 | Phase 7.1–7.3 | Defined separate sequential adaptive-quiz API/prompt/UI contracts, a 10-answer cap, nonce-derived deterministic session IDs, server-computed difficulty/score/weak concepts, source-anchor validation, explicit provider-failure recovery, and summary-only local persistence. | Yes |
+| 2026-10-30 | Phase 7.4–7.8 | Added validated adaptive start/answer schemas and endpoints, source-grounded prompts with semantic post-validation retry, deterministic question IDs/shuffling/difficulty/score/weak-concept processing, a no-provider finish path, and backend tests. Backend suite: 65 passed. | Yes |
 | 2026-10-27 | Phase 0 | Normalized specs to `docs/spec/`; scaffolded backend & frontend; verified health endpoint & mock service; live Gemma smoke test blocked pending user GEMINI_API_KEY. | Yes (`docsspec/` -> `docs/spec/`) |
 | 2026-10-28 | Phase 1 | Completed backend core: Pydantic schemas, prompt builders, async GemmaService with repair retry, all 5 endpoints with post-processing, and 42 unit/api tests. | No (Followed spec strictly) |
 | 2026-10-28 | Phase 2 | Completed frontend shell: responsive Sidebar, Header, BottomTabBar, SettingsContext, feature panels with interactive state, mock mode services, and verified build. | No (Followed spec strictly) |

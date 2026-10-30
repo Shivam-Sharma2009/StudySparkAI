@@ -27,6 +27,19 @@ from schemas import (
     QuizOutput,
     QuizData,
     QuizQuestion,
+    Difficulty,
+    AdaptiveQuizStartRequest,
+    AdaptiveQuizStartOutput,
+    AdaptiveQuizQuestionOutput,
+    AdaptiveQuizQuestion,
+    AdaptiveQuizAnswerRequest,
+    AdaptiveAnswerRecord,
+    AdaptiveQuizStartData,
+    AdaptiveQuizAnswerData,
+    AdaptiveNextAction,
+    AdaptiveCompletionReason,
+    adaptive_next_level,
+    ResponseMeta,
     StudyPlanRequest,
     PlanOutput,
     PlanData,
@@ -245,6 +258,93 @@ async def generic_error_handler(request: Request, exc: Exception):
 # Endpoints (05-API-Spec §3-§7)
 # ============================================================================
 
+ADAPTIVE_QUESTION_LIMIT = 10
+
+
+def adaptive_session_id(session_nonce: str) -> str:
+    value = uuid.uuid5(
+        uuid.NAMESPACE_URL,
+        f"studyspark-ai:adaptive-quiz:{session_nonce}",
+    )
+    return f"aq_{value.hex}"
+
+
+def validate_adaptive_question(
+    output: AdaptiveQuizQuestionOutput,
+    content: str,
+    expected_difficulty: Difficulty,
+    target_concept: str = "",
+) -> None:
+    if output.difficulty != expected_difficulty:
+        raise ValueError("Question difficulty does not match the backend-selected difficulty")
+    if output.source_anchor.casefold() not in content.casefold():
+        raise ValueError("Question source_anchor is not present in the submitted material")
+    if target_concept and target_concept.casefold() not in {
+        tag.casefold() for tag in output.concept_tags
+    }:
+        raise ValueError("Practice question does not include the targeted weak concept")
+
+
+def build_adaptive_question(
+    session_id: str,
+    number: int,
+    output: AdaptiveQuizQuestionOutput,
+    is_practice: bool,
+) -> AdaptiveQuizQuestion:
+    options = list(output.options)
+    correct_text = options[output.correct_index]
+    random.shuffle(options)
+    return AdaptiveQuizQuestion(
+        id=f"{session_id}-q{number}",
+        number=number,
+        question=output.question,
+        options=options,
+        correct_index=options.index(correct_text),
+        explanation=output.explanation,
+        concept_tags=output.concept_tags,
+        source_anchor=output.source_anchor,
+        difficulty=output.difficulty,
+        is_practice=is_practice,
+    )
+
+
+def aggregate_weak_concepts(records: List[AdaptiveAnswerRecord]) -> List[str]:
+    totals: Dict[str, Dict[str, Any]] = {}
+    for position, record in enumerate(records):
+        if record.selected_index == record.correct_index:
+            continue
+        for concept in record.concept_tags:
+            key = concept.casefold()
+            current = totals.setdefault(key, {"label": concept, "count": 0, "last_seen": -1})
+            current["count"] += 1
+            current["last_seen"] = position
+    ranked = sorted(
+        totals.values(),
+        key=lambda item: (-item["count"], -item["last_seen"], item["label"].casefold()),
+    )
+    return [item["label"] for item in ranked[:5]]
+
+
+def adaptive_practice_reason(concept: str, language: str) -> str:
+    if language == "hi":
+        return f"आगे बढ़ने से पहले {concept} का अभ्यास करें।"
+    return f"Let's practice {concept} before moving on."
+
+
+def make_adaptive_answer_record(
+    question: AdaptiveQuizQuestion,
+    selected_index: int,
+) -> AdaptiveAnswerRecord:
+    return AdaptiveAnswerRecord(
+        question_id=question.id,
+        number=question.number,
+        difficulty=question.difficulty,
+        concept_tags=question.concept_tags,
+        selected_index=selected_index,
+        correct_index=question.correct_index,
+        is_practice=question.is_practice,
+    )
+
 @app.get("/api/health")
 async def health_check():
     """
@@ -395,6 +495,151 @@ async def generate_quiz(
         questions=processed_questions,
     )
 
+    return {"ok": True, "data": data, "meta": meta}
+
+
+@app.post("/api/adaptive-quiz/start", response_model=SuccessEnvelope[AdaptiveQuizStartData])
+@limiter.limit(settings.rate_limit)
+async def start_adaptive_quiz(
+    payload: AdaptiveQuizStartRequest,
+    request: Request,
+    gemma: GemmaService = Depends(get_gemma_service),
+):
+    system, user = prompts.build_adaptive_start_prompt(
+        content=payload.content,
+        difficulty=payload.difficulty.value,
+        language=payload.language.value,
+    )
+
+    def validate_output(output: AdaptiveQuizStartOutput) -> None:
+        validate_adaptive_question(output, payload.content, payload.difficulty)
+
+    output, meta = await gemma.generate_json(
+        system=system,
+        user=user,
+        output_model=AdaptiveQuizStartOutput,
+        temperature=0.5,
+        max_output_tokens=1200,
+        language=payload.language.value,
+        post_validate=validate_output,
+    )
+    session_id = adaptive_session_id(payload.session_nonce)
+    question = build_adaptive_question(session_id, 1, output, is_practice=False)
+    data = AdaptiveQuizStartData(
+        session_id=session_id,
+        topic=output.topic,
+        question_limit=ADAPTIVE_QUESTION_LIMIT,
+        question=question,
+    )
+    return {"ok": True, "data": data, "meta": meta}
+
+
+@app.post("/api/adaptive-quiz/answer", response_model=SuccessEnvelope[AdaptiveQuizAnswerData])
+@limiter.limit(settings.rate_limit)
+async def answer_adaptive_quiz(
+    payload: AdaptiveQuizAnswerRequest,
+    request: Request,
+    gemma: GemmaService = Depends(get_gemma_service),
+):
+    validate_adaptive_question(
+        payload.current_question,
+        payload.content,
+        payload.current_question.difficulty,
+    )
+    current_record = make_adaptive_answer_record(
+        payload.current_question,
+        payload.selected_index,
+    )
+    records = [*payload.answer_history, current_record]
+    score = sum(record.selected_index == record.correct_index for record in records)
+    weak_concepts = aggregate_weak_concepts(records)
+    difficulty_history = [record.difficulty for record in records]
+
+    if len(records) >= ADAPTIVE_QUESTION_LIMIT:
+        next_action = AdaptiveNextAction.COMPLETE
+        completion_reason = AdaptiveCompletionReason.QUESTION_LIMIT
+    elif payload.finish:
+        next_action = AdaptiveNextAction.COMPLETE
+        completion_reason = AdaptiveCompletionReason(
+            payload.finish_reason or AdaptiveCompletionReason.USER_STOPPED.value
+        )
+    else:
+        next_action = (
+            AdaptiveNextAction.CONTINUE
+            if current_record.selected_index == current_record.correct_index
+            else AdaptiveNextAction.PRACTICE
+        )
+        completion_reason = None
+
+    practice_reason = None
+    next_question = None
+    if next_action != AdaptiveNextAction.COMPLETE:
+        next_difficulty, is_practice = adaptive_next_level(
+            payload.current_question.difficulty,
+            current_record.selected_index == current_record.correct_index,
+            payload.current_question.is_practice,
+        )
+        target_concept = weak_concepts[0] if is_practice and weak_concepts else ""
+        practice_reason = (
+            adaptive_practice_reason(target_concept, payload.language.value)
+            if target_concept
+            else None
+        )
+        system, user = prompts.build_adaptive_answer_prompt(
+            content=payload.content,
+            current_question=payload.current_question.model_dump(mode="json"),
+            selected_index=payload.selected_index,
+            answer_history=[record.model_dump(mode="json") for record in records],
+            next_difficulty=next_difficulty.value,
+            target_concept=target_concept,
+            is_practice=is_practice,
+            language=payload.language.value,
+        )
+
+        def validate_output(output: AdaptiveQuizQuestionOutput) -> None:
+            validate_adaptive_question(
+                output,
+                payload.content,
+                next_difficulty,
+                target_concept,
+            )
+
+        output, meta = await gemma.generate_json(
+            system=system,
+            user=user,
+            output_model=AdaptiveQuizQuestionOutput,
+            temperature=0.5,
+            max_output_tokens=1000,
+            language=payload.language.value,
+            post_validate=validate_output,
+        )
+        next_question = build_adaptive_question(
+            payload.session_id,
+            len(records) + 1,
+            output,
+            is_practice=is_practice,
+        )
+    else:
+        meta = ResponseMeta(
+            model=settings.gemma_model,
+            language=payload.language.value,
+            latency_ms=0,
+            attempts=0,
+        )
+
+    data = AdaptiveQuizAnswerData(
+        session_id=payload.session_id,
+        topic=payload.topic,
+        question_limit=ADAPTIVE_QUESTION_LIMIT,
+        answered_count=len(records),
+        score=score,
+        difficulty_history=difficulty_history,
+        weak_concepts=weak_concepts,
+        next_action=next_action,
+        practice_reason=practice_reason,
+        question=next_question,
+        completion_reason=completion_reason,
+    )
     return {"ok": True, "data": data, "meta": meta}
 
 

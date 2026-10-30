@@ -8,6 +8,8 @@ from prompts import (
     build_summary_prompt,
     build_quiz_prompt,
     build_plan_prompt,
+    build_adaptive_start_prompt,
+    build_adaptive_answer_prompt,
     build_repair_message,
 )
 
@@ -76,3 +78,34 @@ def test_build_repair_message():
     msg = build_repair_message("quiz must have exactly 5 questions with 4 options each")
     assert "Your previous reply was not valid." in msg
     assert "quiz must have exactly 5 questions with 4 options each" in msg
+
+
+def test_adaptive_start_prompt_uses_language_and_source_boundary():
+    source = "Plants use chlorophyll to absorb light."
+    system, user = build_adaptive_start_prompt(source, "medium", "hi")
+    assert "Hindi (Devanagari script)" in system
+    assert f"<material>\n{source}\n</material>" in user
+    assert "exact substring" in user
+    assert '"source_anchor": "exact phrase from the material"' in user
+    assert '"difficulty": "medium"' in user
+
+
+def test_adaptive_answer_prompt_includes_validated_history_and_target():
+    source = "Plants use chlorophyll to absorb light."
+    question = {"question": "What absorbs light?", "correct_index": 0}
+    history = [{"number": 1, "selected_index": 2, "correct_index": 0}]
+    system, user = build_adaptive_answer_prompt(
+        content=source,
+        current_question=question,
+        selected_index=2,
+        answer_history=history,
+        next_difficulty="easy",
+        target_concept="chlorophyll",
+        is_practice=True,
+        language="en",
+    )
+    assert "English" in system
+    assert f"<material>\n{source}\n</material>" in user
+    assert '"selected_index":2' in user
+    assert "target concept 'chlorophyll'" in user
+    assert 'Set difficulty to exactly easy' in user

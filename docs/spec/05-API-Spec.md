@@ -244,6 +244,7 @@ Adaptive Quiz is an opt-in sequential flow; the existing `POST /api/quiz` contra
 - Difficulty changes are deterministic: after a correct non-practice answer, go up one level (cap at hard); after any incorrect answer, go down one level (floor at easy) and generate a practice question for the most frequent weak concept (most recent concept wins a tie); after a correct practice answer, hold difficulty and continue with a non-practice question.
 - `answer_history` is ordered, starts at question 1, and contains only question ID/number, difficulty, concept tags, selected/correct indices, and `is_practice`. The server validates its sequence and difficulty transitions and recomputes score and weak concepts; clients do not submit score or a desired next difficulty.
 - Complete automatically after answer 10. The answer endpoint also accepts `finish: true` to record the submitted answer and finish without another model call.
+- For a finish or question-limit response that makes no model call, `meta.attempts` and `meta.latency_ms` are both `0`; generated responses use the existing 1–2 attempt range.
 - If generation fails, return the normal error envelope without losing the current answer. The UI can retry or explicitly finish the session; it must not fabricate a generated question or silently turn provider errors into success.
 - Persist only a completed session summary: session ID, score, answered count, difficulty history, weak concepts, and completion reason. Never persist source material, topic text, question text/options, explanations, or selected/correct answer text.
 
@@ -294,8 +295,10 @@ The model-facing output is `topic` plus question text, four options, `correct_in
 ```json
 {
   "session_id": "aq_0123456789abcdef0123456789abcdef",
+  "topic": "Photosynthesis",
   "content": "Photosynthesis notes or topic",
   "language": "en",
+  "initial_difficulty": "medium",
   "current_question": {
     "id": "aq_0123456789abcdef0123456789abcdef-q1",
     "number": 1,
@@ -314,7 +317,7 @@ The model-facing output is `topic` plus question text, four options, `correct_in
 }
 ```
 
-Each answer-history item has `{ "question_id", "number", "difficulty", "concept_tags", "selected_index", "correct_index", "is_practice" }`. It has no question or option text.
+Each answer-history item has `{ "question_id", "number", "difficulty", "concept_tags", "selected_index", "correct_index", "is_practice" }`. It has no question or option text. `initial_difficulty` is the difficulty selected at start and is used to validate the history's transition sequence. `finish_reason` is optional and, when `finish` is true, may be `user_stopped` or `provider_error`.
 
 **`data`**
 ```json

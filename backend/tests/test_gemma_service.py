@@ -2,7 +2,13 @@ import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 from gemma_service import extract_json, GemmaService
-from schemas import ExplainOutput, AppError, ErrorCode
+from schemas import (
+    AdaptiveQuizQuestionOutput,
+    ExplainOutput,
+    AppError,
+    Difficulty,
+    ErrorCode,
+)
 
 
 # ============================================================================
@@ -155,6 +161,51 @@ async def test_gemma_service_retry_on_invalid_output_success_second_try():
     # Verify second call received repair prompt
     second_call_user_prompt = mock_client.aio.models.generate_content.call_args_list[1].kwargs["contents"]
     assert "Your previous reply was not valid." in second_call_user_prompt
+
+
+@pytest.mark.asyncio
+async def test_gemma_service_retries_semantic_post_validation_failure():
+    mock_client = MagicMock()
+    invalid = MagicMock()
+    invalid.text = """{
+        "question": "What absorbs light?",
+        "options": ["Chlorophyll", "Keratin", "Melanin", "Haemoglobin"],
+        "correct_index": 0,
+        "explanation": "Chlorophyll absorbs light.",
+        "concept_tags": ["chlorophyll"],
+        "source_anchor": "missing phrase",
+        "difficulty": "medium"
+    }"""
+    valid = MagicMock()
+    valid.text = """{
+        "question": "What absorbs light?",
+        "options": ["Chlorophyll", "Keratin", "Melanin", "Haemoglobin"],
+        "correct_index": 0,
+        "explanation": "Chlorophyll absorbs light.",
+        "concept_tags": ["chlorophyll"],
+        "source_anchor": "Chlorophyll absorbs light",
+        "difficulty": "medium"
+    }"""
+    mock_client.aio.models.generate_content = AsyncMock(side_effect=[invalid, valid])
+    service = GemmaService(api_key="valid-mock-key", client=mock_client)
+
+    def validate_anchor(output):
+        if output.source_anchor.casefold() not in "Chlorophyll absorbs light.".casefold():
+            raise ValueError("source_anchor must occur in source material")
+
+    result, meta = await service.generate_json(
+        system="sys",
+        user="adaptive question",
+        output_model=AdaptiveQuizQuestionOutput,
+        temperature=0.5,
+        max_output_tokens=1000,
+        post_validate=validate_anchor,
+    )
+
+    assert result.source_anchor == "Chlorophyll absorbs light"
+    assert meta.attempts == 2
+    repair_prompt = mock_client.aio.models.generate_content.call_args_list[1].kwargs["contents"]
+    assert "source_anchor must occur in source material" in repair_prompt
 
 
 @pytest.mark.asyncio

@@ -2,7 +2,7 @@ import json
 import logging
 import time
 import asyncio
-from typing import Type, TypeVar, Tuple, Dict, Any, Optional
+from typing import Type, TypeVar, Tuple, Dict, Any, Optional, Callable
 from pydantic import BaseModel, ValidationError
 
 from config import get_settings
@@ -147,6 +147,7 @@ class GemmaService:
         temperature: float,
         max_output_tokens: int,
         language: str = "en",
+        post_validate: Optional[Callable[[T], None]] = None,
     ) -> Tuple[T, ResponseMeta]:
         """
         Calls Gemma to generate structured JSON, validates against output_model,
@@ -247,6 +248,8 @@ class GemmaService:
                     )
 
                 validated_instance = output_model.model_validate(data_dict)
+                if post_validate is not None:
+                    post_validate(validated_instance)
                 latency_ms = int((time.perf_counter() - start_time) * 1000)
                 meta = ResponseMeta(
                     model=self.model,
