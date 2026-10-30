@@ -14,6 +14,12 @@ StudySpark AI is an AI-powered study companion for turning a topic or class note
 
 The interface supports English and Hindi AI responses, light and dark themes, and mock mode for trying the frontend without an API key.
 
+## Screenshots
+
+| Desktop Dashboard | Mobile View |
+|---|---|
+| ![Desktop Dashboard](docs/assets/screenshots/01-home.png) | ![Mobile View](docs/assets/screenshots/03-mobile.png) |
+
 ## Tech stack
 
 - Frontend: React 18, Vite, Tailwind CSS, React Router, and lucide-react
