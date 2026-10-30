@@ -141,6 +141,13 @@ Spec references: API → `05`, prompts → `06`, design → `03`, UI → `07`, t
 
 **Phase 6 gate: NOT PASSED.** Automated sample seeding is verified. Rehearsal, recording, day-of backend/quota checks, and live inference smoke tests remain manual; the last recorded live provider attempts failed, so live readiness remains **BLOCKED** until retested successfully.
 
+**Phase 6 verification update (2026-10-30):**
+
+- Local `/api/health` returned 200 with the configured model. Live English UI requests reached the provider, but none produced a valid saved result: Explain returned 504 after 58.4 s (invalid first output, then retry timeout); Summarize returned 502 after 44.8 s (both outputs failed validation); Quiz returned 504 after 30.0 s; Study Plan returned 504 after 30.0 s.
+- Failed requests were not saved to History. Loading the documented fallback in the current isolated browser produced four visible sample entries, one per feature; verify them again in the actual presentation browser before demo day.
+- Provider requests received HTTP 200 responses, indicating the configured key was accepted for those requests. Account quota was not independently verified. Rehearsal, recording, presentation-browser checks, and quota verification remain outstanding. Live readiness is **BLOCKED**.
+- For the local development CORS allow-list, open the frontend at `http://localhost:5173` (not `http://127.0.0.1:5173`).
+
 ---
 
 ## Phase 7 — Adaptive AI Quiz (post-Phase-6 enhancement)
