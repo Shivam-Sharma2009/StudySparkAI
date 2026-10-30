@@ -77,16 +77,16 @@ Spec references: API → `05`, prompts → `06`, design → `03`, UI → `07`, t
 
 ## Phase 5 — Harden and verify locally (≈ 2–3 h)
 
-- [ ] 5.1 Run the edge-case list in `09 §3–4`; fix failures (local resilience cases verified; live provider cases blocked).
+- [x] 5.1 Run the edge-case list in `09 §3–4`; fix failures (local resilience cases verified; live provider cases blocked).
 - [ ] 5.2 Accessibility pass from `07 §7` (keyboard-only run of all four tools, focus management, contrast).
 - [x] 5.3 Verify production settings, environment templates, secret handling, and CORS configuration locally without deploying.
-- [ ] 5.4 Complete the README with verified features, screenshots, quickstart, environment variables, and architecture diagram (content and diagram added; project screenshots remain outstanding).
+- [x] 5.4 Complete the README with verified features, screenshots, quickstart, environment variables, and architecture diagram.
 
 **Gate 5:** local backend/frontend tests, production build, dependency audits, and the feasible local edge-case/accessibility checks pass. Record live-provider or browser/device checks that cannot be completed locally as blocked; deployment is explicitly deferred to the final phase.
 
-**Verified progress (2026-10-29):**
+**Verified progress (2026-10-30):**
 
-- Backend hardening is committed as `eaa2385`; the backend suite passes **46 tests**. Production CORS validation, request-size limits, and safe provider logging are covered by tests. The placeholder-only environment templates and ignored local `.env` files were checked.
+- Backend hardening is committed as `eaa2385`; the backend suite passes **47 tests**. Production CORS validation, request-size limits, rate limiting, and safe provider logging are covered by tests. The placeholder-only environment templates and ignored local `.env` files were checked.
 - Frontend API envelope/health validation, production mock gating, and duplicate-submit guards are committed as `5913747`; **6 frontend tests** and the production build pass.
 - Vite and React Router upgrades are committed as `295f144`; `npm audit` reports **0 vulnerabilities**. `pip-audit` reports no known vulnerabilities in declared requirements or installed backend packages after upgrading the local virtualenv's pip to 26.2.2 (the virtualenv is ignored and not committed).
 - Mock-mode browser checks exercised all four feature views, local history, saved plan-progress persistence after reload, language and theme persistence, keyboard focus visibility, the mobile navigation, and layouts at 360/768/1280 CSS pixels without horizontal overflow or browser console errors.
@@ -96,20 +96,21 @@ Spec references: API → `05`, prompts → `06`, design → `03`, UI → `07`, t
 - The production build succeeded with `VITE_USE_MOCKS=true` in the build environment. A production-preview browser submission attempted the backend and showed the expected friendly network error when the preview origin was not in the local backend CORS allowlist; it did not substitute mock content.
 - Live inference was attempted once for each endpoint in English on 2026-10-29. Explain returned `MODEL_UNAVAILABLE` (503), summarize returned `MODEL_OUTPUT_INVALID` (502), quiz returned `MODEL_UNAVAILABLE` (503), and study plan returned `MODEL_TIMEOUT` (504). The health endpoint reported a configured key, but that does not verify provider inference. Real inference acceptance is therefore **BLOCKED**; no successful live feature result is claimed.
 - Accessibility review is partial: keyboard-visible focus, input labels, result-heading focus, mobile navigation, and 360 CSS-pixel layout were checked. Targeted fixes provide reduced-motion loading behavior, arrow-key radio navigation, and 44 × 44 px targets for the measured mobile controls. Sampled muted-text contrast on Home and Quiz now exceeds 4.5:1 in both themes (minimum 5.05:1 light, 5.91:1 dark), and a 640 CSS-pixel reflow check had no horizontal overflow. A full app contrast audit, true browser 200% zoom check, and assistive-technology announcement test remain open.
-- README quickstart, environment configuration, hosting guidance, and an architecture diagram are present. Project screenshots are not included; task 5.4 remains open.
+- README quickstart, environment configuration, hosting guidance, architecture diagram, and desktop/mobile project screenshots are present.
 - Deployment is **NOT RUN** and is deferred; no hosting or publication has been performed.
 - Phase 5 remains in progress; Gate 5 is not passed.
 
-**Gate 5 verification update (2026-10-29):**
+**Gate 5 verification update (2026-10-30):**
 
-- Backend tests: **46 passed**, **7 deprecation warnings** on Python 3.14.4. Coverage includes request/schema limits, health response, standardized validation/provider errors, timeout mapping, missing API key behavior, safe provider-error logging, and CORS.
-- Frontend tests: **6 passed**. Production build: **passed** with `VITE_USE_MOCKS=true` in the build environment; mock responses remain development-only. Frontend source inspection confirms real request failures return user-visible errors rather than mock fixtures.
+- Backend tests: **47 passed**, with dependency deprecation warnings on Python 3.14.7. Coverage includes request/schema limits, health response, standardized validation/provider errors, timeout mapping, missing API key behavior, safe provider-error logging, rate limiting, and CORS.
+- Frontend tests: **12 passed**. Production build: **passed**; mock responses remain development-only. Frontend source inspection confirms real request failures return user-visible errors rather than mock fixtures.
 - Dependency audits: `npm audit --audit-level=low` found **0 vulnerabilities**. `pip-audit` found no known vulnerabilities in declared requirements or the installed backend environment. The audit utility was installed only in the ignored backend virtualenv; dependency manifests and lockfiles were not changed.
 - Local production-config smoke check: Uvicorn started with `APP_ENV=production` and a single explicit HTTPS origin; `/api/health` returned 200, the configured CORS origin was allowed and an unlisted origin was rejected, and `/docs` plus `/openapi.json` returned 404. No model requests were made.
 - Secret handling: `backend/.env` is ignored and not tracked; only `.env.example` templates are tracked. A local scan of 55 tracked files found no common API-key, token, or private-key signatures; values were not emitted.
 - Feature review: the four panels still use their respective `api.js` endpoints; successful results alone are saved to local history, quiz scoring remains connected, and plan progress remains keyed by plan. No feature source changes were needed.
-- Remaining test gap: `RATE_LIMIT=20/minute` is configured, but there is no dedicated test for the documented 21st-request `429` case. No live model calls were made; real inference remains **BLOCKED** based on the earlier provider failures.
-- Gate 5 remains **not passed**: the rate-limit edge-case test, remaining accessibility checks (full-app contrast, screen-reader announcements, and 200% zoom), and README screenshots remain open. Deployment is **NOT RUN** and remains deferred to Phase 8.
+- The dedicated `RATE_LIMIT=20/minute` 21st-request `429` test now passes. No live model calls were made during this verification; real inference remains **BLOCKED** based on the earlier provider failures.
+- Dashboard tool cards are now keyboard-operable semantic buttons, and quiz completion includes the final answer when persisting the score.
+- Gate 5 remains **not passed**: remaining accessibility checks (full-app contrast, screen-reader announcements, and 200% zoom) are still open. Deployment is **NOT RUN** and remains deferred to Phase 8.
 
 ---
 
@@ -189,3 +190,4 @@ Record deviations and decisions here as you go so the specs stay truthful:
 | 2026-10-28 | Phase 4.4, 4.6, 4.7 | Verified quiz score persistence and History statistics, fixed quiz-from-saved-result prefill, and moved `?demo=1` seeding to app startup. Expanded the demo quiz to five questions and removed a React warning from score persistence. Mock-browser checks covered all four tools, history prefill, score stats across reload, and demo seeding; the production build passed. Live Hindi model output remains unverified because no backend API key is configured. | No |
 | 2026-10-29 | Phase 5 (partial) | Hardened backend and frontend API handling, upgraded vulnerable frontend dependencies, audited Python packages, and updated deployment guidance. Backend tests 46/46, frontend tests 6/6, production build passed, npm audit 0 findings, pip-audit 0 findings after updating ignored virtualenv pip. Mock-browser acceptance passed for the listed flows. Four live endpoint attempts failed with safe provider/model error envelopes; real inference and deployment remain blocked/not run. | Yes |
 | 2026-10-29 | Phase 5 accessibility follow-up | Added reduced-motion handling for loading status, arrow-key/roving-tabindex behavior to the Explain, Summary, and Quiz radio groups, and 44 × 44 px targets to the header, segmented controls, and compact result actions. Mock-browser checks verified arrow-key selection, reduced-motion animation suppression, and visible mobile button sizes at 360 CSS pixels; the complete accessibility checklist remains open. | Yes |
+| 2026-10-30 | Phase 5 verification follow-up | Confirmed the dedicated 21st-request rate-limit test, updated the checklist for the current 47 backend and 12 frontend tests, converted dashboard tool cards to keyboard-operable buttons, and fixed final-answer omission in quiz score persistence. Full contrast, screen-reader, 200% zoom, live-provider, and deployment checks remain blocked or manual. | Yes |

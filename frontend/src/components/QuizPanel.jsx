@@ -65,9 +65,11 @@ export function QuizResult({ quiz, onNewQuiz, language = 'en', onCompleteQuiz })
       setSelectedOption(null);
       setChecked(false);
     } else {
+      const finalScore =
+        answers.filter((a) => a.isCorrect).length +
+        (selectedOption === currentQ.correct_index ? 1 : 0);
       setCompleted(true);
       if (onCompleteQuiz) {
-        const finalScore = answers.filter((a) => a.isCorrect).length;
         onCompleteQuiz({
           score: finalScore,
           total: questions.length,
