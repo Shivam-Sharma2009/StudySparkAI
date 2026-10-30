@@ -79,6 +79,11 @@ export const mockQuizData = {
   ]
 };
 
+export function isMockQuizContentSupported(content) {
+  return typeof content === 'string' &&
+    content.toLocaleLowerCase().includes(mockQuizData.topic.toLocaleLowerCase());
+}
+
 export const mockAdaptiveStartData = {
   session_id: `aq_${'0'.repeat(32)}`,
   topic: 'Photosynthesis',

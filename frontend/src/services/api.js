@@ -3,6 +3,7 @@ import {
   mockExplainData,
   mockSummaryData,
   mockQuizData,
+  isMockQuizContentSupported,
   mockPlanData,
   mockAdaptiveStartData,
   createMockAdaptiveAnswer,
@@ -79,6 +80,13 @@ export async function apiRequest(endpoint, payload, fixtureKey = null) {
         data = mockSummaryData;
         break;
       case 'quiz':
+        if (!isMockQuizContentSupported(payload?.content)) {
+          throw new ApiError(
+            'MOCK_FIXTURE_MISMATCH',
+            'The mock quiz sample only covers Photosynthesis. Disable mock mode for a topic-specific quiz.',
+            false
+          );
+        }
         data = mockQuizData;
         break;
       case 'study-plan':

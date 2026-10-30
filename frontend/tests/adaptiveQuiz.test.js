@@ -3,6 +3,7 @@ import test from 'node:test';
 import { normalizeHistory, safeGet } from '../src/hooks/useStudyHistory.js';
 import {
   createMockAdaptiveAnswer,
+  isMockQuizContentSupported,
   mockAdaptiveStartData,
 } from '../src/services/mocks.js';
 import {
@@ -20,6 +21,13 @@ const summary = {
   weak_concepts: ['photosynthesis'],
   completion_reason: 'user_stopped',
 };
+
+test('only serves the static quiz mock for its matching topic', () => {
+  assert.equal(isMockQuizContentSupported('Photosynthesis notes'), true);
+  assert.equal(isMockQuizContentSupported('photosynthesis'), true);
+  assert.equal(isMockQuizContentSupported('laser'), false);
+  assert.equal(isMockQuizContentSupported(undefined), false);
+});
 
 function question(number = 1) {
   return {

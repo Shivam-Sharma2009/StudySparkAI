@@ -230,6 +230,7 @@ const UI_TEXT = {
     errorTimeout: 'The request took too long. Please try again.',
     errorNetwork: 'Cannot connect to the StudySpark server. Check your connection and try again.',
     errorGeneric: 'Something went wrong. Please try again.',
+    mockQuizFixtureMismatch: 'The mock quiz sample only covers Photosynthesis. Set VITE_USE_MOCKS=false to generate a topic-specific quiz.',
     aiKeyMissing: 'AI key is not configured',
     toggleLanguage: 'Toggle output language between English and Hindi',
     switchToLight: 'Switch to light mode',
@@ -471,6 +472,7 @@ const UI_TEXT = {
     errorTimeout: 'अनुरोध में अधिक समय लगा। कृपया फिर कोशिश करें।',
     errorNetwork: 'StudySpark सर्वर से कनेक्ट नहीं हो सका। कनेक्शन जांचकर फिर कोशिश करें।',
     errorGeneric: 'कुछ गड़बड़ हुई। कृपया फिर कोशिश करें।',
+    mockQuizFixtureMismatch: 'मॉक क्विज़ नमूना केवल प्रकाश संश्लेषण पर है। अपने विषय का क्विज़ बनाने के लिए VITE_USE_MOCKS=false करें।',
     aiKeyMissing: 'AI की कॉन्फ़िगर नहीं है',
     toggleLanguage: 'अंग्रेज़ी और हिंदी की भाषा बदलें',
     switchToLight: 'लाइट मोड पर जाएं',
@@ -588,6 +590,7 @@ export function SettingsProvider({ children }) {
       CLIENT_TIMEOUT: 'errorTimeout',
       NETWORK_ERROR: 'errorNetwork',
       INVALID_RESPONSE: 'errorGeneric',
+      MOCK_FIXTURE_MISMATCH: 'mockQuizFixtureMismatch',
       INTERNAL_ERROR: 'errorGeneric',
     };
     const key = errorKeys[error?.code];
