@@ -156,9 +156,9 @@ Spec references: API → `05`, prompts → `06`, design → `03`, UI → `07`, t
 
 ### Planning and contract
 
-- [ ] 7.1 Update `05-API-Spec.md`, `06-Prompt-Spec.md`, and `09-Testing-Deployment.md` with the adaptive quiz contract, limits, fallback behavior, and golden cases before implementation.
-- [ ] 7.2 Define the adaptive session model: maximum 10 questions, difficulty levels `easy | medium | hard`, weak-concept tracking, stop conditions, and a deterministic session identifier.
-- [ ] 7.3 Define privacy and persistence rules: keep only the adaptive session summary, score, difficulty history, and weak concepts in `localStorage`; do not persist raw notes or full answer text.
+- [x] 7.1 Update `02-TRD.md`, `03-System-Design.md`, `05-API-Spec.md`, `06-Prompt-Spec.md`, `07-UI-UX-Spec.md`, and `09-Testing-Deployment.md` with the adaptive quiz contract, limits, fallback behavior, and golden cases before implementation.
+- [x] 7.2 Define the adaptive session model: maximum 10 questions, difficulty levels `easy | medium | hard`, weak-concept tracking, stop conditions, and a deterministic session identifier.
+- [x] 7.3 Define privacy and persistence rules: keep only the adaptive session summary, score, difficulty history, and weak concepts in `localStorage`; do not persist raw notes or full answer text.
 
 ### Backend
 
@@ -222,6 +222,7 @@ Record deviations and decisions here as you go so the specs stay truthful:
 
 | Date | Task | Change / decision | Spec updated? |
 |---|---|---|---|
+| 2026-10-30 | Phase 7.1–7.3 | Defined separate sequential adaptive-quiz API/prompt/UI contracts, a 10-answer cap, nonce-derived deterministic session IDs, server-computed difficulty/score/weak concepts, source-anchor validation, explicit provider-failure recovery, and summary-only local persistence. | Yes |
 | 2026-10-27 | Phase 0 | Normalized specs to `docs/spec/`; scaffolded backend & frontend; verified health endpoint & mock service; live Gemma smoke test blocked pending user GEMINI_API_KEY. | Yes (`docsspec/` -> `docs/spec/`) |
 | 2026-10-28 | Phase 1 | Completed backend core: Pydantic schemas, prompt builders, async GemmaService with repair retry, all 5 endpoints with post-processing, and 42 unit/api tests. | No (Followed spec strictly) |
 | 2026-10-28 | Phase 2 | Completed frontend shell: responsive Sidebar, Header, BottomTabBar, SettingsContext, feature panels with interactive state, mock mode services, and verified build. | No (Followed spec strictly) |

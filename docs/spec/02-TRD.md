@@ -79,6 +79,9 @@ Companion to `01-PRD.md`. Defines the constraints, technology choices and non-fu
 | Deadline | ≥ start date and ≤ start date + 30 days |
 | Plan horizon | ≤ 14 days per generation |
 | Quiz questions | exactly 5, 4 options each |
+| Adaptive quiz questions | ≤ 10 per session; 4 distinct options each |
+| Adaptive quiz material | 3–6000 chars; answer history ≤ 9 records |
+| Adaptive quiz question | 1–3 concept tags; source anchor ≤ 100 chars |
 | History entries | 50 (oldest evicted) |
 | Rate limit | 20 requests / minute / IP |
 

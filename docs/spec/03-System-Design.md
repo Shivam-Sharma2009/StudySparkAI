@@ -12,12 +12,13 @@ flowchart TB
         N["Sidebar + Header"]
         P1["ExplainPanel"]
         P2["SummaryPanel"]
-        P3["QuizPanel"]
+        P3["QuizPanel + AdaptiveQuizPanel"]
         P4["StudyPlanPanel"]
         H["StudyHistory page"]
         LS[("localStorage: history, settings, scores, plan progress")]
         API["services/api.js"]
         P1 & P2 & P3 & P4 --> API
+        P3 --> API
         P1 & P2 & P3 & P4 --> LS
         H --> LS
     end
@@ -35,7 +36,7 @@ flowchart TB
     GS -->|"google-genai SDK"| M["Gemma 4 via Gemini API"]
 ```
 
-One frontend, one backend, one model integration, four features. Results render inline in each panel; History reopens saved results.
+One frontend, one backend, one model integration, and four core features plus a separate opt-in Adaptive Quiz. Results render inline in each panel; History reopens saved results and completed adaptive summaries.
 
 ## 2. Component responsibilities
 
@@ -44,10 +45,11 @@ One frontend, one backend, one model integration, four features. Results render 
 | `Sidebar.jsx` | Navigation between the four tools and History; bottom tab bar on mobile |
 | `Header.jsx` | Logo + tagline, language toggle (EN / हिं), theme toggle, backend status dot |
 | `Home.jsx` | Holds the active tool; renders one panel at a time |
+| `AdaptiveQuizPanel.jsx` | Optional sequential quiz flow; sends source and validated, text-free answer history to the backend; persists only completed summaries |
 | `*Panel.jsx` | Form, validation, API call, loading/error states, result view. Each file also **exports its result component** (`ExplainResult`, `SummaryResult`, `QuizResult`, `StudyPlanResult`) so History can reuse it |
 | `StudyHistory.jsx` | Lists saved entries, filters by type, reopens results read-only, deletes entries, shows quiz score stats |
-| `services/api.js` | The only place that calls `fetch`; envelope parsing, timeout, error mapping, mock mode |
-| `main.py` | FastAPI app, CORS, rate limit, the five endpoints, exception handlers, request logging |
+| `services/api.js` | The only place that calls `fetch`; envelope parsing, timeout, error mapping, mock mode, and both adaptive-quiz calls |
+| `main.py` | FastAPI app, CORS, rate limit, endpoints, exception handlers, request logging |
 | `schemas.py` | Pydantic models, enums, `ErrorCode`, `AppError` |
 | `prompts.py` | System prompt + one builder per feature (returns system and user text) |
 | `gemma_service.py` | Client setup, `generate_json`, JSON extraction, validation, retry, error mapping |
@@ -127,6 +129,7 @@ All keys are versioned. All reads are wrapped in try/catch and fall back to defa
 | `studyspark:history:v1` | `[ HistoryEntry ]` newest first, max 50 |
 | `studyspark:quizScores:v1` | `[ { "entryId", "topic", "score", "total", "difficulty", "takenAt" } ]` |
 | `studyspark:planProgress:v1` | `{ "<entryId>": { "<sessionId>": true } }` |
+| `studyspark:history:v1` adaptive entry | Completed summary only: deterministic session ID, score, answered count, difficulty history, weak concepts, completion reason; no topic/source, question, options, explanations, or answer text |
 
 ```json
 // HistoryEntry
@@ -152,7 +155,7 @@ studyspark-ai/
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── Sidebar.jsx  Header.jsx  ExplainPanel.jsx  SummaryPanel.jsx
-│   │   │   ├── QuizPanel.jsx  StudyPlanPanel.jsx
+│   │   │   ├── QuizPanel.jsx  AdaptiveQuizPanel.jsx  StudyPlanPanel.jsx
 │   │   │   └── StatusMessage.jsx          # ADDITIVE: loading / error / empty
 │   │   ├── context/SettingsContext.jsx    # ADDITIVE
 │   │   ├── hooks/useLocalStorage.js       # ADDITIVE

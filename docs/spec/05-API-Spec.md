@@ -230,3 +230,120 @@ Validation: exactly 5 questions; each has non-empty `question`, **4 distinct non
 ## 9. CORS and headers
 
 Allowed origins from `ALLOWED_ORIGINS`; allowed methods `GET, POST, OPTIONS`; allowed headers `Content-Type`. Each response includes `X-Request-Id`.
+
+## 10. Adaptive quiz
+
+Adaptive Quiz is an opt-in sequential flow; the existing `POST /api/quiz` contract and five-question experience do not change. Each call is stateless: the client sends the source material and a validated, text-free answer history with each answer request. Source material and complete question/answer text are never written to server storage or browser history.
+
+### Limits and session rules
+
+- Source material is a topic or notes, 3–6000 trimmed characters; language is `en` or `hi`; difficulty is `easy`, `medium`, or `hard` (default `medium`).
+- A session has at most 10 questions. The first question uses the requested difficulty.
+- Session identity is deterministic for retries: the client sends a UUID `session_nonce`; the server returns `aq_` plus the hex UUIDv5 of `studyspark-ai:adaptive-quiz:{session_nonce}` in the `NAMESPACE_URL` namespace. A new session uses a new nonce.
+- Every question has four distinct, non-empty options, one answer index, an explanation, 1–3 concept tags, and a source anchor (≤100 characters) that must occur in the submitted source material, case-insensitively. The backend assigns question numbers and IDs (`{session_id}-q{number}`), and shuffles options while remapping the correct index.
+- Difficulty changes are deterministic: after a correct non-practice answer, go up one level (cap at hard); after any incorrect answer, go down one level (floor at easy) and generate a practice question for the most frequent weak concept (most recent concept wins a tie); after a correct practice answer, hold difficulty and continue with a non-practice question.
+- `answer_history` is ordered, starts at question 1, and contains only question ID/number, difficulty, concept tags, selected/correct indices, and `is_practice`. The server validates its sequence and difficulty transitions and recomputes score and weak concepts; clients do not submit score or a desired next difficulty.
+- Complete automatically after answer 10. The answer endpoint also accepts `finish: true` to record the submitted answer and finish without another model call.
+- If generation fails, return the normal error envelope without losing the current answer. The UI can retry or explicitly finish the session; it must not fabricate a generated question or silently turn provider errors into success.
+- Persist only a completed session summary: session ID, score, answered count, difficulty history, weak concepts, and completion reason. Never persist source material, topic text, question text/options, explanations, or selected/correct answer text.
+
+### `POST /api/adaptive-quiz/start`
+
+**Request**
+```json
+{
+  "content": "Photosynthesis notes or topic",
+  "difficulty": "medium",
+  "language": "en",
+  "session_nonce": "a1b2c3d4-e5f6-4789-8abc-0123456789ab"
+}
+```
+
+**`data`**
+```json
+{
+  "session_id": "aq_0123456789abcdef0123456789abcdef",
+  "topic": "Photosynthesis",
+  "question_limit": 10,
+  "answered_count": 0,
+  "score": 0,
+  "difficulty_history": [],
+  "weak_concepts": [],
+  "next_action": "continue",
+  "practice_reason": null,
+  "question": {
+    "id": "aq_0123456789abcdef0123456789abcdef-q1",
+    "number": 1,
+    "question": "Which pigment absorbs light in the notes?",
+    "options": ["Chlorophyll", "Keratin", "Melanin", "Haemoglobin"],
+    "correct_index": 0,
+    "explanation": "The notes identify chlorophyll as the pigment that absorbs light.",
+    "concept_tags": ["chlorophyll", "light absorption"],
+    "source_anchor": "Chlorophyll absorbs light",
+    "difficulty": "medium",
+    "is_practice": false
+  }
+}
+```
+
+The model-facing output is `topic` plus question text, four options, `correct_index`, explanation, concept tags, source anchor, and the requested difficulty. It never supplies IDs, question numbers, session state, score, or action.
+
+### `POST /api/adaptive-quiz/answer`
+
+**Request**
+```json
+{
+  "session_id": "aq_0123456789abcdef0123456789abcdef",
+  "content": "Photosynthesis notes or topic",
+  "language": "en",
+  "current_question": {
+    "id": "aq_0123456789abcdef0123456789abcdef-q1",
+    "number": 1,
+    "question": "Which pigment absorbs light in the notes?",
+    "options": ["Chlorophyll", "Keratin", "Melanin", "Haemoglobin"],
+    "correct_index": 0,
+    "explanation": "The notes identify chlorophyll as the pigment that absorbs light.",
+    "concept_tags": ["chlorophyll", "light absorption"],
+    "source_anchor": "Chlorophyll absorbs light",
+    "difficulty": "medium",
+    "is_practice": false
+  },
+  "selected_index": 1,
+  "answer_history": [],
+  "finish": false
+}
+```
+
+Each answer-history item has `{ "question_id", "number", "difficulty", "concept_tags", "selected_index", "correct_index", "is_practice" }`. It has no question or option text.
+
+**`data`**
+```json
+{
+  "session_id": "aq_0123456789abcdef0123456789abcdef",
+  "topic": "Photosynthesis",
+  "question_limit": 10,
+  "answered_count": 1,
+  "score": 0,
+  "difficulty_history": ["medium"],
+  "weak_concepts": ["chlorophyll", "light absorption"],
+  "next_action": "practice",
+  "practice_reason": "Let's practice chlorophyll before moving on.",
+  "question": {
+    "id": "aq_0123456789abcdef0123456789abcdef-q2",
+    "number": 2,
+    "question": "Which pigment is named in the notes as absorbing light?",
+    "options": ["Chlorophyll", "Keratin", "Melanin", "Haemoglobin"],
+    "correct_index": 0,
+    "explanation": "The notes say chlorophyll absorbs light.",
+    "concept_tags": ["chlorophyll"],
+    "source_anchor": "Chlorophyll absorbs light",
+    "difficulty": "easy",
+    "is_practice": true
+  },
+  "completion_reason": null
+}
+```
+
+`next_action` is `continue`, `practice`, or `complete`. A completion response has `question: null` and `completion_reason` of `question_limit` or `user_stopped`. The `practice_reason` is present only for a targeted practice question and is in the requested language.
+
+Validation errors use the regular `VALIDATION_ERROR` envelope. Both endpoints use the existing rate limiter, request-size middleware, request ID, error mapping, and Gemma JSON-validation/one-repair pipeline. Semantic grounding cannot be proven from shape validation alone; the exact source-anchor check and prompt constraints provide a deterministic grounding guard, and golden outputs still require human review.

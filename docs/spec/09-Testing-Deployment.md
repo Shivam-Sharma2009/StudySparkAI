@@ -28,6 +28,7 @@ Tests that depend on the real model are **not** part of CI: they are non-determi
 | Health | Works with no API key (`ai_configured:false`) |
 | Rate limit | 21st request in a minute → 429 `RATE_LIMITED` |
 | CORS | Allowed origin gets headers; other origin does not |
+| Adaptive quiz | Deterministic session ID from a UUID nonce; start and answer question validation; 4 distinct options; source-anchor enforcement; prompt-leak rejection; ordered text-free history; selected/correct index validation; difficulty transitions; practice targeting; score/weak-concept aggregation; finish without model call; 10-answer cap; provider error envelopes; rate limiting and request IDs |
 
 ## 3. Golden inputs (run against the real model)
 
@@ -47,6 +48,11 @@ Run each in **English and Hindi** where applicable. Pass = valid envelope, sensi
 | 10 | study-plan | deadline before start date; `daily_hours: 0` | 422 `VALIDATION_ERROR` |
 | 11 | study-plan | one subject, no deadline, 1 h/day | 7-day plan |
 | 12 | any | API key removed | 503 `MODEL_UNAVAILABLE`, friendly UI message |
+| 13 | adaptive quiz start | source is photosynthesis notes, `medium` | One grounded question, exact source anchor, four options and deterministic ID |
+| 14 | adaptive quiz answer | select an incorrect answer for a concept | Score stays unchanged; difficulty drops by at most one; next action is targeted practice |
+| 15 | adaptive quiz answer | correct non-practice answer at `easy` | Next question is `medium`; no client-selected difficulty is accepted |
+| 16 | adaptive quiz answer | complete 10 valid answers or send `finish:true` | `complete` with no next question; score and weak concepts derived by backend |
+| 17 | adaptive quiz | notes include prompt-injection text; model output leaks prompt or source anchor is absent | No prompt disclosure; invalid output is retried once then safely rejected |
 
 Record results (pass/fail, latency, any schema failures) in the Task Log in `08-Implementation-Plan.md`.
 
@@ -56,6 +62,7 @@ Record results (pass/fail, latency, any schema failures) in the Task Log in `08-
 - [ ] Explain: submit, loading appears instantly, result renders, Copy works, example chips fill input.
 - [ ] Summarize: counter updates, over-limit blocks submit, result has key terms.
 - [ ] Quiz: answer all 5, feedback colours plus icons, final score, retake, new quiz.
+- [ ] Adaptive quiz: start, answer correctly and incorrectly, see difficulty transitions and targeted practice, finish/retry after provider failure, and reopen only the sanitized summary from History.
 - [ ] Study plan: add/remove subjects, validation messages, plan renders, ticking a session updates progress and survives refresh.
 - [ ] History: entries appear, open read-only, delete one, clear all with confirm, refresh persists.
 
@@ -73,6 +80,7 @@ Record results (pass/fail, latency, any schema failures) in the Task Log in `08-
 **Devices and accessibility**
 - [ ] 360 px, 768 px, 1280 px — no horizontal scroll.
 - [ ] Keyboard only: all four tools usable, visible focus, logical order.
+- [ ] Adaptive quiz: radio-group keyboard operation, announced question/feedback changes, focus management, reduced motion, and no horizontal overflow at 360/768/1280 px.
 - [ ] Screen reader announces loading and results; quiz options announced as a radio group.
 - [ ] Latest Chrome, Edge, Safari (iOS), Chrome (Android).
 

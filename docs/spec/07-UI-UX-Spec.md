@@ -92,6 +92,15 @@ Top of main: tool title + one-line description. Below: input card, then result a
 ### 5.7 Status states for backend wake-up
 After 3 s without a health response, show a slim banner under the header: "Waking up the study engine… this can take up to a minute the first time." It disappears when health responds.
 
+### 5.8 AdaptiveQuizPanel
+- The existing five-question QuizPanel remains unchanged. Offer a separate, clearly labeled **Adaptive quiz** mode from the Quiz screen.
+- Explain before starting: the first question uses the selected difficulty; correct non-practice answers raise difficulty, incorrect answers lower it and trigger targeted practice; each session stops after 10 answers.
+- Input and difficulty controls use the existing Quiz styles and limits. Show loading, retryable provider errors, and a **Finish with current score** action after a provider failure; finishing submits the current selected answer without requesting another generated question.
+- In the active flow, show question number/10, current difficulty, question/options as an accessible radio group, feedback/explanation, score, and weak concepts. Announce question/feedback changes and move focus to the new question heading.
+- Practice questions display why the concept is being revisited. Provide a clear completion screen, **Start another** action, and a back path to the fixed quiz.
+- Save only completed session summaries to Study History: score, answered count, difficulty history, weak concepts, and completion reason. Never save topic text, notes, question/option text, explanations, or answer text. Reopening History shows the summary only, not a replay of questions.
+- All labels, status messages, and explanations are available in English and Hindi; preserve `lang`, keyboard operation, visible focus, reduced motion, and 44 × 44 px touch targets.
+
 ## 6. Copy and microcopy
 
 - Tool buttons use action verbs: *Explain it, Summarize, Generate quiz, Create my plan.*
