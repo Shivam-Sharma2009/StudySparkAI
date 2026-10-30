@@ -141,6 +141,13 @@ Spec references: API → `05`, prompts → `06`, design → `03`, UI → `07`, t
 
 **Phase 6 gate: NOT PASSED.** Automated sample seeding is verified. Rehearsal, recording, day-of backend/quota checks, and live inference smoke tests remain manual; the last recorded live provider attempts failed, so live readiness remains **BLOCKED** until retested successfully.
 
+**Phase 6 verification update (2026-10-30):**
+
+- Local `/api/health` returned 200 with the configured model. Live English UI requests reached the provider, but none produced a valid saved result: Explain returned 504 after 58.4 s (invalid first output, then retry timeout); Summarize returned 502 after 44.8 s (both outputs failed validation); Quiz returned 504 after 30.0 s; Study Plan returned 504 after 30.0 s.
+- Failed requests were not saved to History. Loading the documented fallback in the current isolated browser produced four visible sample entries, one per feature; verify them again in the actual presentation browser before demo day.
+- Provider requests received HTTP 200 responses, indicating the configured key was accepted for those requests. Account quota was not independently verified. Rehearsal, recording, presentation-browser checks, and quota verification remain outstanding. Live readiness is **BLOCKED**.
+- For the local development CORS allow-list, open the frontend at `http://localhost:5173` (not `http://127.0.0.1:5173`).
+
 ---
 
 ## Phase 7 — Stretch (only if time remains; not part of the MVP)
@@ -191,3 +198,4 @@ Record deviations and decisions here as you go so the specs stay truthful:
 | 2026-10-29 | Phase 5 (partial) | Hardened backend and frontend API handling, upgraded vulnerable frontend dependencies, audited Python packages, and updated deployment guidance. Backend tests 46/46, frontend tests 6/6, production build passed, npm audit 0 findings, pip-audit 0 findings after updating ignored virtualenv pip. Mock-browser acceptance passed for the listed flows. Four live endpoint attempts failed with safe provider/model error envelopes; real inference and deployment remain blocked/not run. | Yes |
 | 2026-10-29 | Phase 5 accessibility follow-up | Added reduced-motion handling for loading status, arrow-key/roving-tabindex behavior to the Explain, Summary, and Quiz radio groups, and 44 × 44 px targets to the header, segmented controls, and compact result actions. Mock-browser checks verified arrow-key selection, reduced-motion animation suppression, and visible mobile button sizes at 360 CSS pixels; the complete accessibility checklist remains open. | Yes |
 | 2026-10-30 | Phase 5 verification follow-up | Confirmed the dedicated 21st-request rate-limit test, updated the checklist for the current 47 backend and 12 frontend tests, converted dashboard tool cards to keyboard-operable buttons, and fixed final-answer omission in quiz score persistence. Full contrast, screen-reader, 200% zoom, live-provider, and deployment checks remain blocked or manual. | Yes |
+| 2026-10-30 | Phase 6 initial readiness check | Local health passed and provider requests were accepted, but all four live UI smoke requests failed (Explain 504, Summary 502, Quiz 504, Study Plan 504); failures were not saved. Loaded and verified four static fallback entries in the isolated browser. Live readiness, quota confirmation, pitch rehearsal, backup recording, and presentation-browser verification remain open. | Yes |
