@@ -116,9 +116,10 @@ export default function Home({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Tool 1: Explain */}
-          <div
+          <button
+            type="button"
             onClick={() => setActiveTool('explain')}
-            className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#181B24] border border-[#E5E3DA] dark:border-[#2C3140] hover:border-indigo-400 dark:hover:border-indigo-500 shadow-sm hover:shadow-md transition cursor-pointer group space-y-3"
+            className="w-full text-left p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#181B24] border border-[#E5E3DA] dark:border-[#2C3140] hover:border-indigo-400 dark:hover:border-indigo-500 shadow-sm hover:shadow-md transition cursor-pointer group space-y-3"
           >
             <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center group-hover:scale-105 transition">
               <BookOpen className="w-5 h-5" />
@@ -132,12 +133,13 @@ export default function Home({
                 {t('toolExplainDescription')}
               </p>
             </div>
-          </div>
+          </button>
 
           {/* Tool 2: Summary */}
-          <div
+          <button
+            type="button"
             onClick={() => setActiveTool('summary')}
-            className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#181B24] border border-[#E5E3DA] dark:border-[#2C3140] hover:border-indigo-400 dark:hover:border-indigo-500 shadow-sm hover:shadow-md transition cursor-pointer group space-y-3"
+            className="w-full text-left p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#181B24] border border-[#E5E3DA] dark:border-[#2C3140] hover:border-indigo-400 dark:hover:border-indigo-500 shadow-sm hover:shadow-md transition cursor-pointer group space-y-3"
           >
             <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center group-hover:scale-105 transition">
               <FileText className="w-5 h-5" />
@@ -151,12 +153,13 @@ export default function Home({
                 {t('toolSummaryDescription')}
               </p>
             </div>
-          </div>
+          </button>
 
           {/* Tool 3: Quiz */}
-          <div
+          <button
+            type="button"
             onClick={() => setActiveTool('quiz')}
-            className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#181B24] border border-[#E5E3DA] dark:border-[#2C3140] hover:border-indigo-400 dark:hover:border-indigo-500 shadow-sm hover:shadow-md transition cursor-pointer group space-y-3"
+            className="w-full text-left p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#181B24] border border-[#E5E3DA] dark:border-[#2C3140] hover:border-indigo-400 dark:hover:border-indigo-500 shadow-sm hover:shadow-md transition cursor-pointer group space-y-3"
           >
             <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:scale-105 transition">
               <CheckCircle2 className="w-5 h-5" />
@@ -170,12 +173,13 @@ export default function Home({
                 {t('toolQuizDescription')}
               </p>
             </div>
-          </div>
+          </button>
 
           {/* Tool 4: Plan */}
-          <div
+          <button
+            type="button"
             onClick={() => setActiveTool('plan')}
-            className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#181B24] border border-[#E5E3DA] dark:border-[#2C3140] hover:border-indigo-400 dark:hover:border-indigo-500 shadow-sm hover:shadow-md transition cursor-pointer group space-y-3"
+            className="w-full text-left p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#181B24] border border-[#E5E3DA] dark:border-[#2C3140] hover:border-indigo-400 dark:hover:border-indigo-500 shadow-sm hover:shadow-md transition cursor-pointer group space-y-3"
           >
             <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center group-hover:scale-105 transition">
               <Calendar className="w-5 h-5" />
@@ -189,7 +193,7 @@ export default function Home({
                 {t('toolPlanDescription')}
               </p>
             </div>
-          </div>
+          </button>
         </div>
       </section>
 
