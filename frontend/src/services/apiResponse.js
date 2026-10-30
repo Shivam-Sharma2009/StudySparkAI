@@ -1,3 +1,8 @@
+import {
+  isValidAdaptiveAnswerData,
+  isValidAdaptiveStartData,
+} from './adaptiveQuiz.js';
+
 export class ApiError extends Error {
   constructor(code, message, retryable = true, details = null) {
     super(message);
@@ -19,7 +24,7 @@ function invalidResponse() {
   );
 }
 
-export async function parseApiResponse(response) {
+export async function parseApiResponse(response, { allowZeroAttempts = false } = {}) {
   let payload;
   try {
     payload = await response.json();
@@ -52,7 +57,8 @@ export async function parseApiResponse(response) {
     !Number.isFinite(meta.latency_ms) ||
     meta.latency_ms < 0 ||
     !Number.isInteger(meta.attempts) ||
-    meta.attempts < 1 ||
+    meta.attempts < (allowZeroAttempts ? 0 : 1) ||
+    (meta.attempts === 0 && data.next_action !== 'complete') ||
     meta.attempts > 2
   ) {
     throw invalidResponse();
@@ -69,6 +75,10 @@ const isStringArray = (value, minimumLength = 1) =>
 
 export function isValidFeatureData(feature, data) {
   switch (feature) {
+    case 'adaptive-start':
+      return isValidAdaptiveStartData(data);
+    case 'adaptive-answer':
+      return isValidAdaptiveAnswerData(data);
     case 'explain':
       return (
         hasStringFields(data, ['title', 'explanation', 'example', 'quick_recap']) &&

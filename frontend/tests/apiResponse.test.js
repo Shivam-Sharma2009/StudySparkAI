@@ -34,6 +34,25 @@ test('returns a safe error for malformed JSON and success envelopes', async () =
   );
 });
 
+test('allows zero attempts only for a completed adaptive answer envelope', async () => {
+  const completed = {
+    ok: true,
+    data: { next_action: 'complete' },
+    meta: { model: 'gemma', language: 'en', latency_ms: 0, attempts: 0 },
+  };
+  await assert.rejects(parseApiResponse(response(completed)));
+  assert.deepEqual(
+    await parseApiResponse(response(completed), { allowZeroAttempts: true }),
+    completed
+  );
+  await assert.rejects(
+    parseApiResponse(response({
+      ...completed,
+      data: { next_action: 'continue' },
+    }), { allowZeroAttempts: true })
+  );
+});
+
 test('preserves a valid backend error envelope', async () => {
   await assert.rejects(
     parseApiResponse(response({

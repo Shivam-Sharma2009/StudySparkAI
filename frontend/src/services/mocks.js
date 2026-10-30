@@ -1,6 +1,6 @@
 // Mock fixtures for StudySpark AI frontend development per 05-API-Spec
 
-import { getDemoPlanDates } from './demoData';
+import { getDemoPlanDates } from './demoData.js';
 
 const MOCK_PLAN_DATES = getDemoPlanDates();
 
@@ -78,6 +78,118 @@ export const mockQuizData = {
     }
   ]
 };
+
+export const mockAdaptiveStartData = {
+  session_id: `aq_${'0'.repeat(32)}`,
+  topic: 'Photosynthesis',
+  question_limit: 10,
+  answered_count: 0,
+  score: 0,
+  difficulty_history: [],
+  weak_concepts: [],
+  next_action: 'continue',
+  practice_reason: null,
+  question: {
+    id: `aq_${'0'.repeat(32)}-q1`,
+    number: 1,
+    question: 'Which pigment absorbs sunlight during photosynthesis?',
+    options: ['Chlorophyll', 'Haemoglobin', 'Melanin', 'Keratin'],
+    correct_index: 0,
+    explanation: 'Chlorophyll captures light energy in plant cells.',
+    concept_tags: ['light absorption'],
+    source_anchor: 'Photosynthesis',
+    difficulty: 'medium',
+    is_practice: false,
+  },
+};
+
+const MOCK_ADAPTIVE_FOLLOW_UP = [
+  {
+    question: 'What is the main sugar plants produce during photosynthesis?',
+    options: ['Glucose', 'Lactose', 'Protein', 'Cholesterol'],
+    explanation: 'Plants produce glucose, which can be used or stored as starch.',
+  },
+  {
+    question: 'Which gas is released as a by-product of photosynthesis?',
+    options: ['Oxygen', 'Nitrogen', 'Hydrogen', 'Methane'],
+    explanation: 'Oxygen is released during the light-dependent reactions.',
+  },
+  {
+    question: 'Where does photosynthesis mainly take place in plant cells?',
+    options: ['Chloroplasts', 'Mitochondria', 'Nucleus', 'Ribosomes'],
+    explanation: 'Chloroplasts contain chlorophyll and the photosynthesis machinery.',
+  },
+  {
+    question: 'Which two materials do plants use with light to make glucose?',
+    options: ['Water and carbon dioxide', 'Oxygen and glucose', 'Nitrogen and oxygen', 'Protein and water'],
+    explanation: 'Plants use water and carbon dioxide as the main raw materials.',
+  },
+];
+
+export function createMockAdaptiveAnswer(payload) {
+  const { current_question: currentQuestion, answer_history: history = [] } = payload;
+  const records = [
+    ...history,
+    {
+      question_id: currentQuestion.id,
+      number: currentQuestion.number,
+      difficulty: currentQuestion.difficulty,
+      concept_tags: currentQuestion.concept_tags,
+      selected_index: payload.selected_index,
+      correct_index: currentQuestion.correct_index,
+      is_practice: currentQuestion.is_practice,
+    },
+  ];
+  const answeredCount = records.length;
+  const score = records.filter((record) => record.selected_index === record.correct_index).length;
+  const isComplete = answeredCount >= 10 || payload.finish;
+  const completionReason = answeredCount >= 10
+    ? 'question_limit'
+    : payload.finish_reason || 'user_stopped';
+  const weakConcepts = [...new Set(
+    records
+      .filter((record) => record.selected_index !== record.correct_index)
+      .flatMap((record) => record.concept_tags)
+  )].slice(0, 5);
+  const isCorrect = payload.selected_index === currentQuestion.correct_index;
+  const nextDifficulty = isCorrect && currentQuestion.is_practice
+    ? currentQuestion.difficulty
+    : isCorrect
+      ? ({ easy: 'medium', medium: 'hard', hard: 'hard' })[currentQuestion.difficulty]
+      : ({ easy: 'easy', medium: 'easy', hard: 'medium' })[currentQuestion.difficulty];
+  const nextNumber = answeredCount + 1;
+  const followUp = MOCK_ADAPTIVE_FOLLOW_UP[(nextNumber - 2) % MOCK_ADAPTIVE_FOLLOW_UP.length];
+  const data = {
+    session_id: payload.session_id,
+    topic: payload.topic,
+    question_limit: 10,
+    answered_count: answeredCount,
+    score,
+    difficulty_history: records.map((record) => record.difficulty),
+    weak_concepts: weakConcepts,
+    next_action: isComplete
+      ? 'complete'
+      : isCorrect ? 'continue' : 'practice',
+    practice_reason: isComplete || isCorrect
+      ? null
+      : `Review ${weakConcepts[0] || 'this concept'}.`,
+    completion_reason: isComplete ? completionReason : null,
+    question: isComplete ? null : {
+      ...mockAdaptiveStartData.question,
+      id: `${payload.session_id}-q${nextNumber}`,
+      number: nextNumber,
+      ...followUp,
+      concept_tags: currentQuestion.concept_tags,
+      source_anchor: (payload.content || 'Study material').slice(0, 100),
+      difficulty: nextDifficulty,
+      is_practice: !isCorrect,
+    },
+  };
+  return {
+    data,
+    attempts: isComplete ? 0 : 1,
+  };
+}
 
 export const mockPlanData = {
   summary: "Physics gets priority because its deadline is first; Maths fills the remaining time and revision happens near each deadline.",

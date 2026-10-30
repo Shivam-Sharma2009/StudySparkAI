@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSettings } from '../context/SettingsContext';
 import { useStudyHistory } from '../hooks/useStudyHistory';
 import { generateQuiz } from '../services/api';
+import AdaptiveQuizPanel from './AdaptiveQuizPanel';
 import StatusMessage, { HistoryStorageNotice } from './StatusMessage';
 import { CheckCircle2, Check, X, RotateCcw, Plus, Sparkles, HelpCircle } from 'lucide-react';
 
@@ -355,6 +356,7 @@ export default function QuizPanel({ initialContent = '' }) {
   const [quiz, setQuiz] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [lastEntryId, setLastEntryId] = useState(null);
+  const [adaptiveOpen, setAdaptiveOpen] = useState(false);
 
   const isValid = content.trim().length >= 3 && content.trim().length <= 6000;
 
@@ -397,6 +399,16 @@ export default function QuizPanel({ initialContent = '' }) {
         <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
           {t('quizDescription')}
         </p>
+        <button
+          type="button"
+          aria-expanded={adaptiveOpen}
+          aria-controls="adaptive-quiz-panel"
+          onClick={() => setAdaptiveOpen((open) => !open)}
+          className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl border border-indigo-200 dark:border-indigo-800 px-4 py-2 text-xs font-semibold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+        >
+          <Sparkles className="h-4 w-4" />
+          {adaptiveOpen ? t('hideAdaptiveQuiz') : t('tryAdaptiveQuiz')}
+        </button>
       </div>
 
       {/* Input Card */}
@@ -502,6 +514,10 @@ export default function QuizPanel({ initialContent = '' }) {
           <StatusMessage type="empty" message={t('launchQuiz')} />
         )}
         {status === 'success' && <HistoryStorageNotice warning={storageWarning} />}
+      </div>
+
+      <div id="adaptive-quiz-panel" className={adaptiveOpen ? '' : 'hidden'}>
+        <AdaptiveQuizPanel initialContent={content} />
       </div>
     </div>
   );

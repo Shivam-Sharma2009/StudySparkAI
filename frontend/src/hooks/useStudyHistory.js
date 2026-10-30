@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getDemoPlanDates, seedDemoHistory } from '../services/demoData';
+import { getDemoPlanDates, seedDemoHistory } from '../services/demoData.js';
+import { sanitizeAdaptiveSummary } from '../services/adaptiveQuiz.js';
 
 const HISTORY_KEY = 'studyspark:history:v1';
 const QUIZ_SCORES_KEY = 'studyspark:quizScores:v1';
 const PLAN_PROGRESS_KEY = 'studyspark:planProgress:v1';
 const MAX_ENTRIES = 50;
-const HISTORY_TYPES = new Set(['explain', 'summary', 'quiz', 'plan']);
+const HISTORY_TYPES = new Set(['explain', 'summary', 'quiz', 'plan', 'adaptive']);
 
 function isValidResult(type, result) {
   if (!result || typeof result !== 'object' || Array.isArray(result)) return false;
@@ -35,10 +36,11 @@ function isValidResult(type, result) {
       day && Array.isArray(day.sessions)
     );
   }
+  if (type === 'adaptive') return sanitizeAdaptiveSummary(result) !== null;
   return false;
 }
 
-function normalizeHistory(items) {
+export function normalizeHistory(items) {
   if (!Array.isArray(items)) return [];
   return items
     .filter((item) =>
@@ -50,7 +52,12 @@ function normalizeHistory(items) {
     )
     .map((item) => {
       const timestamp = Date.parse(item.createdAt);
-      const titleCandidate = item.title || item.result.title || item.result.topic ||
+      const safeResult = item.type === 'adaptive'
+        ? sanitizeAdaptiveSummary(item.result)
+        : item.result;
+      const titleCandidate = item.type === 'adaptive'
+        ? 'Adaptive Quiz'
+        : item.title || item.result.title || item.result.topic ||
         (item.type === 'summary' ? 'Notes Summary' : 'Study Plan');
       return {
         id: item.id,
@@ -62,8 +69,10 @@ function normalizeHistory(items) {
           ? new Date(timestamp).toISOString()
           : new Date(0).toISOString(),
         language: item.language === 'hi' ? 'hi' : 'en',
-        result: item.result,
-        ...(Number.isFinite(item.score) && Number.isFinite(item.total) && item.total > 0
+        result: safeResult,
+        ...(item.type === 'adaptive'
+          ? { score: safeResult.score, total: safeResult.answered_count }
+          : Number.isFinite(item.score) && Number.isFinite(item.total) && item.total > 0
           ? { score: item.score, total: item.total }
           : {}),
       };
@@ -98,7 +107,7 @@ function normalizePlanProgress(value) {
   );
 }
 
-function safeGet(key, fallback) {
+export function safeGet(key, fallback) {
   try {
     const raw = window.localStorage.getItem(key);
     if (!raw) return fallback;
@@ -444,14 +453,21 @@ export function useStudyHistory() {
   }, [saveQuizScore]);
 
   // Statistics
-  const quizCount = quizScores.length;
-  const bestScorePct = quizScores.reduce((max, s) => {
+  const adaptiveScores = history
+    .filter((entry) => entry.type === 'adaptive')
+    .map((entry) => ({
+      score: entry.result.score,
+      total: entry.result.answered_count,
+    }));
+  const allQuizScores = [...quizScores, ...adaptiveScores];
+  const quizCount = allQuizScores.length;
+  const bestScorePct = allQuizScores.reduce((max, s) => {
     const pct = s.total > 0 ? Math.round((s.score / s.total) * 100) : 0;
     return pct > max ? pct : max;
   }, 0);
   const avgScorePct = quizCount
     ? Math.round(
-        quizScores.reduce((sum, s) => sum + (s.total > 0 ? (s.score / s.total) * 100 : 0), 0) /
+        allQuizScores.reduce((sum, s) => sum + (s.total > 0 ? (s.score / s.total) * 100 : 0), 0) /
           quizCount
       )
     : 0;

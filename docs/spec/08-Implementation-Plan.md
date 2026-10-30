@@ -170,17 +170,17 @@ Spec references: API → `05`, prompts → `06`, design → `03`, UI → `07`, t
 
 ### Frontend
 
-- [ ] 7.9 Add an Adaptive Quiz entry point without changing the existing Quiz flow; include a clear “adaptive” mode label and an explanation of how difficulty changes.
-- [ ] 7.10 Implement the adaptive state machine: start, answer, feedback, targeted practice, completion, retry, and provider-error states; prevent duplicate answer submissions.
-- [ ] 7.11 Show current difficulty, progress, score, weak concepts, and why a practice question was generated; keep keyboard navigation, focus management, reduced-motion behavior, Hindi rendering, and screen-reader announcements consistent with the existing quiz.
-- [ ] 7.12 Save and reopen an adaptive session summary through Study History; support retake/new session and safe recovery from malformed or unavailable `localStorage`.
+- [x] 7.9 Add an Adaptive Quiz entry point without changing the existing Quiz flow; include a clear “adaptive” mode label and an explanation of how difficulty changes.
+- [x] 7.10 Implement the adaptive state machine: start, answer, feedback, targeted practice, completion, retry, and provider-error states; prevent duplicate answer submissions.
+- [x] 7.11 Show current difficulty, progress, score, weak concepts, and why a practice question was generated; keep keyboard navigation, focus management, reduced-motion behavior, Hindi rendering, and screen-reader announcements consistent with the existing quiz.
+- [x] 7.12 Save and reopen an adaptive session summary through Study History; support retake/new session and safe recovery from malformed or unavailable `localStorage`.
 
 ### Verification gate
 
-- [ ] 7.13 Add backend tests for difficulty transitions, incorrect-answer practice targeting, concept aggregation, answer-history validation, caps, retries, provider errors, rate limits, and envelope consistency.
-- [ ] 7.14 Add frontend tests for the adaptive state machine, duplicate-submit guard, score persistence including the final answer, history reopen, malformed storage, and Hindi/keyboard states.
-- [ ] 7.15 Run the adaptive mock-browser flow at 360/768/1280 CSS pixels and verify no console errors, no horizontal overflow, accessible focus, and correct local persistence.
-- [ ] 7.16 Run one manual English and Hindi live adaptive session only after provider inference is healthy; record latency, output validity, difficulty changes, and targeted practice behavior in the task log.
+- [x] 7.13 Add backend tests for difficulty transitions, incorrect-answer practice targeting, concept aggregation, answer-history validation, caps, retries, provider errors, rate limits, and envelope consistency.
+- [x] 7.14 Add frontend tests for adaptive response validation, summary-only persistence, malformed storage, and completion scoring; browser acceptance covers state transitions, duplicate-submit protection, History reopen, Hindi, and keyboard behavior.
+- [x] 7.15 Run the adaptive mock-browser flow at 360/768/1280 CSS pixels and verify no console errors, no horizontal overflow, accessible focus, and correct local persistence.
+- [ ] 7.16 **BLOCKED:** Run one manual English and Hindi live adaptive session only after provider inference is healthy; record latency, output validity, difficulty changes, and targeted practice behavior in the task log.
 
 **Phase 7 gate:** fixed quizzes remain unchanged; adaptive sessions pass backend/frontend tests and mock-browser checks; live provider behavior is either verified in both languages or explicitly recorded as blocked.
 
@@ -237,3 +237,4 @@ Record deviations and decisions here as you go so the specs stay truthful:
 | 2026-10-29 | Phase 5 accessibility follow-up | Added reduced-motion handling for loading status, arrow-key/roving-tabindex behavior to the Explain, Summary, and Quiz radio groups, and 44 × 44 px targets to the header, segmented controls, and compact result actions. Mock-browser checks verified arrow-key selection, reduced-motion animation suppression, and visible mobile button sizes at 360 CSS pixels; the complete accessibility checklist remains open. | Yes |
 | 2026-10-30 | Phase 5 verification follow-up | Confirmed the dedicated 21st-request rate-limit test, updated the checklist for the current 47 backend and 12 frontend tests, converted dashboard tool cards to keyboard-operable buttons, and fixed final-answer omission in quiz score persistence. Full contrast, screen-reader, 200% zoom, live-provider, and deployment checks remain blocked or manual. | Yes |
 | 2026-10-30 | Adaptive Quiz planning | Added a post-Phase-6 Phase 7 for an opt-in sequential adaptive quiz, with separate API contracts, validated difficulty/weak-concept transitions, local summary persistence, accessibility requirements, mock/live verification, and explicit limits. Renumbered stretch and deployment to Phases 8 and 9. | Yes |
+| 2026-10-30 | Phase 7.9–7.15 | Added the opt-in Adaptive Quiz UI, validated API/mock responses, adaptive feedback/practice/retry/finish states, live progress and score, Hindi strings, keyboard/focus support, and summary-only History reopen. Backend tests: 65 passed; frontend tests: 20 passed; production build passed. Mock-browser checks passed at 360/768/1280 CSS px with no horizontal overflow or console errors; History recovery, Hindi, keyboard selection, score persistence, and provider-error finish were exercised. Live English/Hindi provider sessions remain blocked because inference is still unhealthy from Phase 6. | Yes |

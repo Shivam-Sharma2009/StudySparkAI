@@ -1,4 +1,13 @@
-import { mockHealth, mockExplainData, mockSummaryData, mockQuizData, mockPlanData, mockErrors } from './mocks';
+import {
+  mockHealth,
+  mockExplainData,
+  mockSummaryData,
+  mockQuizData,
+  mockPlanData,
+  mockAdaptiveStartData,
+  createMockAdaptiveAnswer,
+  mockErrors,
+} from './mocks';
 import {
   ApiError,
   isValidFeatureData,
@@ -49,7 +58,11 @@ export async function apiRequest(endpoint, payload, fixtureKey = null) {
   // Check URL query override for mock error testing: ?mockError=RATE_LIMITED
   const params = new URLSearchParams(window.location.search);
   const mockErrorKey = params.get('mockError');
-  if (mockErrorKey && mockErrors[mockErrorKey]) {
+  if (
+    mockErrorKey &&
+    mockErrors[mockErrorKey] &&
+    !(fixtureKey === 'adaptive-answer' && payload?.finish)
+  ) {
     const err = mockErrors[mockErrorKey].error;
     throw new ApiError(err.code, err.message, err.retryable, err.details);
   }
@@ -71,8 +84,46 @@ export async function apiRequest(endpoint, payload, fixtureKey = null) {
       case 'study-plan':
         data = mockPlanData;
         break;
+      case 'adaptive-start':
+        data = {
+          ...mockAdaptiveStartData,
+          question: {
+            ...mockAdaptiveStartData.question,
+            source_anchor: payload?.content?.trim().slice(0, 100) || 'Study material',
+          },
+        };
+        break;
+      case 'adaptive-answer': {
+        const answer = createMockAdaptiveAnswer(payload);
+        data = answer.data;
+        if (!isValidFeatureData(fixtureKey, data)) {
+          throw new ApiError(
+            'INVALID_RESPONSE',
+            'The study engine returned an invalid response. Please try again.',
+            false
+          );
+        }
+        return {
+          ok: true,
+          data,
+          meta: {
+            model: 'gemma-4-26b-a4b-it',
+            language: payload?.language || 'en',
+            latency_ms: answer.attempts ? 820 : 0,
+            attempts: answer.attempts,
+          },
+        };
+      }
       default:
         data = {};
+    }
+
+    if (fixtureKey && !isValidFeatureData(fixtureKey, data)) {
+      throw new ApiError(
+        'INVALID_RESPONSE',
+        'The study engine returned an invalid response. Please try again.',
+        false
+      );
     }
 
     return {
@@ -99,7 +150,9 @@ export async function apiRequest(endpoint, payload, fixtureKey = null) {
       body: JSON.stringify(payload),
       signal: controller.signal,
     });
-    const result = await parseApiResponse(response);
+    const result = await parseApiResponse(response, {
+      allowZeroAttempts: fixtureKey === 'adaptive-answer',
+    });
     if (!isValidFeatureData(fixtureKey, result.data)) {
       throw new ApiError(
         'INVALID_RESPONSE',
@@ -148,6 +201,16 @@ export async function summarizeNotes(payload) {
  */
 export async function generateQuiz(payload) {
   const res = await apiRequest('/api/quiz', payload, 'quiz');
+  return { data: res.data, meta: res.meta };
+}
+
+export async function startAdaptiveQuiz(payload) {
+  const res = await apiRequest('/api/adaptive-quiz/start', payload, 'adaptive-start');
+  return { data: res.data, meta: res.meta };
+}
+
+export async function answerAdaptiveQuiz(payload) {
+  const res = await apiRequest('/api/adaptive-quiz/answer', payload, 'adaptive-answer');
   return { data: res.data, meta: res.meta };
 }
 

@@ -4,6 +4,7 @@ import { useStudyHistory } from '../hooks/useStudyHistory';
 import { ExplainResult } from '../components/ExplainPanel';
 import { SummaryResult } from '../components/SummaryPanel';
 import { QuizResult } from '../components/QuizPanel';
+import { AdaptiveQuizSummary } from '../components/AdaptiveQuizPanel';
 import { StudyPlanResult } from '../components/StudyPlanPanel';
 import { HistoryStorageNotice } from '../components/StatusMessage';
 import {
@@ -25,6 +26,7 @@ const TABS = [
   { id: 'explain', labelKey: 'explainTab' },
   { id: 'summary', labelKey: 'summaryTab' },
   { id: 'quiz', labelKey: 'quizTab' },
+  { id: 'adaptive', labelKey: 'adaptiveTab' },
   { id: 'plan', labelKey: 'planTab' },
 ];
 
@@ -43,6 +45,11 @@ const TYPE_CONFIG = {
     icon: CheckCircle2,
     labelKey: 'quizTab',
     color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800',
+  },
+  adaptive: {
+    icon: Sparkles,
+    labelKey: 'adaptiveTab',
+    color: 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800',
   },
   plan: {
     icon: Calendar,
@@ -224,6 +231,9 @@ export default function StudyHistory({ onNavigateToTool }) {
                 onNewQuiz={() => setViewingItem(null)}
                 language={viewingItem.language}
               />
+            )}
+            {viewingItem.type === 'adaptive' && viewingItem.result && (
+              <AdaptiveQuizSummary summary={viewingItem.result} />
             )}
             {viewingItem.type === 'plan' && viewingItem.result && (
               <StudyPlanResult plan={viewingItem.result} planId={viewingItem.id} language={viewingItem.language} />
