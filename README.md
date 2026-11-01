@@ -1,4 +1,4 @@
-# StudySpark AI
+no# StudySpark AI
 
 > **Learn Smarter, Not Harder.**
 
@@ -108,6 +108,7 @@ The checked-in frontend environment template sets `VITE_USE_MOCKS=true`, so the 
 | `VITE_USE_MOCKS` | `true` | Set to `false` to send requests to the backend. |
 
 **Keep `GEMINI_API_KEY` only in `backend/.env`.** Never put it in a `VITE_*` variable or frontend source; Vite variables are exposed to the browser. Do not commit `.env` files. Use the `.env.example` templates instead.
+
 
 ## Deployment preparation
 
